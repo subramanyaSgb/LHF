@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   Menu,
@@ -42,16 +43,17 @@ const ROLE_BADGE_COLORS: Record<UserRole, string> = {
 export function TopBar(): React.JSX.Element {
   const location = useLocation();
   const { toggleSidebar, fullscreenMode, toggleFullscreen } = useLayoutStore();
-  const { audioMuted, toggleAudioMute, getUnacknowledgedAlerts } = useAlertStore();
-  const { getOnlineCameras, getOfflineCameras } = useCameraStore();
+  const { audioMuted, toggleAudioMute } = useAlertStore();
+  const alerts = useAlertStore((s) => s.alerts);
+  const cameras = useCameraStore((s) => s.cameras);
   const { user } = useAuthStore();
   const { recordings } = useRecordingStore();
 
   const pageTitle = ROUTE_TITLES[location.pathname] ?? 'InfraSense';
-  const unacknowledgedAlerts = getUnacknowledgedAlerts();
-  const onlineCameras = getOnlineCameras();
-  const offlineCameras = getOfflineCameras();
-  const activeHeats = recordings.filter((r) => r.status === 'recording');
+  const unacknowledgedAlerts = useMemo(() => alerts.filter((a) => a.status === 'active'), [alerts]);
+  const onlineCameras = useMemo(() => cameras.filter((c) => c.status !== 'offline'), [cameras]);
+  const offlineCameras = useMemo(() => cameras.filter((c) => c.status === 'offline'), [cameras]);
+  const activeHeats = useMemo(() => recordings.filter((r) => r.status === 'recording'), [recordings]);
 
   return (
     <header className="h-14 bg-bg-secondary border-b border-border-default flex items-center justify-between px-4 shrink-0">

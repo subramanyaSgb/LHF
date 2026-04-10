@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { cn } from '@/utils/cn';
 import { useAlertStore } from '@/stores/alertStore';
 import { formatRelative } from '@/utils/format';
@@ -17,8 +17,9 @@ interface AlertBannerProps {
 }
 
 export default function AlertBanner({ className }: AlertBannerProps) {
-  const unacknowledged = useAlertStore((s) => s.alerts.filter(a => a.status === 'active'));
+  const alerts = useAlertStore((s) => s.alerts);
   const acknowledgeAlert = useAlertStore((s) => s.acknowledgeAlert);
+  const unacknowledged = useMemo(() => alerts.filter(a => a.status === 'active'), [alerts]);
   const latestAlert = unacknowledged.length > 0 ? unacknowledged[0] : null;
 
   const [dismissed, setDismissed] = useState<string | null>(null);

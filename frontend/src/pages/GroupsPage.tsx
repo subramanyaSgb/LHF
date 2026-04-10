@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useGroupStore } from '@/stores/groupStore';
 import { useCameraStore } from '@/stores/cameraStore';
 import {
@@ -232,7 +232,7 @@ function StitchConfigurator({ group }: { group: CameraGroup }) {
 function GroupCard({ group }: { group: CameraGroup }) {
   const { removeGroup, addCameraToGroup, removeCameraFromGroup } = useGroupStore();
   const cameras = useCameraStore((s) => s.cameras);
-  const ungrouped = useCameraStore((s) => s.getUngroupedCameras());
+  const ungrouped = useMemo(() => cameras.filter((c) => c.groupId === null), [cameras]);
 
   const [expanded, setExpanded] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -383,7 +383,8 @@ function GroupCard({ group }: { group: CameraGroup }) {
 // ---------------------------------------------------------------------------
 export default function GroupsPage(): React.JSX.Element {
   const groups = useGroupStore((s) => s.groups);
-  const ungrouped = useCameraStore((s) => s.getUngroupedCameras());
+  const cameras = useCameraStore((s) => s.cameras);
+  const ungrouped = useMemo(() => cameras.filter((c) => c.groupId === null), [cameras]);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
 
