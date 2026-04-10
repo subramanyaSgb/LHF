@@ -124,36 +124,87 @@ goto MENU
 :STOP_ALL
 echo.
 echo  Stopping all services...
-call :STOP_SERVICES_SILENT
-echo  [OK] All services stopped.
+echo.
+echo  Killing processes on port 8000 (Backend)...
+call :KILL_PORT_VERBOSE 8000
+echo  Killing processes on port 5173 (Frontend)...
+call :KILL_PORT_VERBOSE 5173
+taskkill /FI "WINDOWTITLE eq InfraSense Backend*" /F >nul 2>&1
+taskkill /FI "WINDOWTITLE eq InfraSense Frontend*" /F >nul 2>&1
+timeout /t 2 >nul
+echo.
+REM Verify everything is dead
+set "_still_running=0"
+netstat -ano 2>nul | findstr ":8000 " | findstr "LISTENING" >nul 2>&1
+if !ERRORLEVEL!==0 set "_still_running=1"
+netstat -ano 2>nul | findstr ":5173 " | findstr "LISTENING" >nul 2>&1
+if !ERRORLEVEL!==0 set "_still_running=1"
+if !_still_running!==1 (
+    echo  [WARNING] Some processes may still be running. Try again or close manually.
+) else (
+    echo  [OK] All services stopped. Ports 8000 and 5173 are free.
+)
 echo.
 pause
 goto MENU
 
 :STOP_SERVICES_SILENT
-REM Kill by window title (most reliable on Windows)
-taskkill /FI "WINDOWTITLE eq InfraSense Backend" /F >nul 2>&1
-taskkill /FI "WINDOWTITLE eq InfraSense Frontend" /F >nul 2>&1
-REM Also kill any orphaned processes on the ports
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":8000 " ^| findstr "LISTENING" 2^>nul') do (
-    taskkill /PID %%a /F >nul 2>&1
-)
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":5173 " ^| findstr "LISTENING" 2^>nul') do (
-    taskkill /PID %%a /F >nul 2>&1
-)
+call :KILL_PORT 8000
+call :KILL_PORT 5173
+REM Also try by window title as backup
+taskkill /FI "WINDOWTITLE eq InfraSense Backend*" /F >nul 2>&1
+taskkill /FI "WINDOWTITLE eq InfraSense Frontend*" /F >nul 2>&1
 exit /b
 
 :STOP_BACKEND_SILENT
-taskkill /FI "WINDOWTITLE eq InfraSense Backend" /F >nul 2>&1
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":8000 " ^| findstr "LISTENING" 2^>nul') do (
-    taskkill /PID %%a /F >nul 2>&1
-)
+call :KILL_PORT 8000
+taskkill /FI "WINDOWTITLE eq InfraSense Backend*" /F >nul 2>&1
 exit /b
 
 :STOP_FRONTEND_SILENT
-taskkill /FI "WINDOWTITLE eq InfraSense Frontend" /F >nul 2>&1
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":5173 " ^| findstr "LISTENING" 2^>nul') do (
-    taskkill /PID %%a /F >nul 2>&1
+call :KILL_PORT 5173
+taskkill /FI "WINDOWTITLE eq InfraSense Frontend*" /F >nul 2>&1
+exit /b
+
+:KILL_PORT_VERBOSE
+REM Same as KILL_PORT but prints what it kills
+set "_port=%~1"
+set "_found=0"
+for /f "usebackq tokens=*" %%L in (`netstat -ano ^| findstr ":%_port% " ^| findstr "LISTENING"`) do (
+    set "_line=%%L"
+    set "_found=1"
+    call :EXTRACT_AND_KILL_VERBOSE
+)
+if !_found!==0 echo    No process found on port %_port%.
+exit /b
+
+:EXTRACT_AND_KILL_VERBOSE
+for %%P in (!_line!) do set "_pid=%%P"
+if defined _pid (
+    if "!_pid!" NEQ "0" (
+        echo    Killing PID !_pid! on port %_port%...
+        taskkill /PID !_pid! /T /F >nul 2>&1
+    )
+)
+exit /b
+
+:KILL_PORT
+REM Kill ALL processes listening on a given port (including child processes)
+REM Usage: call :KILL_PORT 8000
+set "_port=%~1"
+for /f "usebackq tokens=*" %%L in (`netstat -ano ^| findstr ":%_port% " ^| findstr "LISTENING"`) do (
+    set "_line=%%L"
+    call :EXTRACT_AND_KILL
+)
+exit /b
+
+:EXTRACT_AND_KILL
+REM Extract PID from the end of the netstat line and kill the process tree
+for %%P in (!_line!) do set "_pid=%%P"
+if defined _pid (
+    if "!_pid!" NEQ "0" (
+        taskkill /PID !_pid! /T /F >nul 2>&1
+    )
 )
 exit /b
 
