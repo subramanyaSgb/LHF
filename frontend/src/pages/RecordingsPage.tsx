@@ -141,7 +141,9 @@ function PlayerView({
   recording: Recording;
   onBack: () => void;
 }) {
-  const { addAnnotation, toggleFlag, getAnnotations } = useRecordingStore();
+  const addAnnotation = useRecordingStore((s) => s.addAnnotation);
+  const toggleFlag = useRecordingStore((s) => s.toggleFlag);
+  const annotations = useRecordingStore((s) => s.annotations);
   const groups = useGroupStore((s) => s.groups);
   const cameras = useCameraStore((s) => s.cameras);
 
@@ -157,7 +159,10 @@ function PlayerView({
 
   const group = groups.find((g) => g.id === recording.groupId);
   const camera = cameras.find((c) => c.id === recording.cameraId);
-  const recordingAnnotations = getAnnotations(recording.id);
+  const recordingAnnotations = useMemo(
+    () => annotations[recording.id] ?? [],
+    [annotations, recording.id],
+  );
 
   // Playback timer
   useEffect(() => {
@@ -511,7 +516,7 @@ export default function RecordingsPage(): React.JSX.Element {
   // Player view
   if (selectedRecording) {
     return (
-      <div className="p-4 md:p-6 bg-bg-primary min-h-screen">
+      <div className="p-4 md:p-6 min-h-full">
         <PlayerView
           recording={selectedRecording}
           onBack={() => setSelectedRecording(null)}
@@ -522,7 +527,7 @@ export default function RecordingsPage(): React.JSX.Element {
 
   // List view
   return (
-    <div className="p-4 md:p-6 bg-bg-primary min-h-screen space-y-4">
+    <div className="p-4 md:p-6 min-h-full space-y-4">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>

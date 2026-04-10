@@ -3,7 +3,6 @@ import { Outlet } from 'react-router-dom';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TopBar } from '@/components/layout/TopBar';
 import { useLayoutStore } from '@/stores/layoutStore';
-import { cn } from '@/utils/cn';
 import { Minimize2 } from 'lucide-react';
 
 export function AppLayout(): React.JSX.Element {
@@ -32,12 +31,7 @@ export function AppLayout(): React.JSX.Element {
         {!fullscreenMode && <TopBar />}
 
         {/* Page content */}
-        <main
-          className={cn(
-            'flex-1 overflow-auto',
-            fullscreenMode ? '' : 'p-4'
-          )}
-        >
+        <main className="flex-1 overflow-auto">
           <Outlet />
         </main>
       </div>

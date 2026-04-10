@@ -26,6 +26,7 @@ interface LayoutControlsProps {
 export default function LayoutControls({ className }: LayoutControlsProps) {
   const currentMode = useLayoutStore((s) => s.currentMode);
   const gridCols = useLayoutStore((s) => s.gridCols);
+  const gridRows = useLayoutStore((s) => s.gridRows);
   const presets = useLayoutStore((s) => s.presets);
   const setLayoutMode = useLayoutStore((s) => s.setLayoutMode);
   const setGrid = useLayoutStore((s) => s.setGrid);
@@ -78,7 +79,7 @@ export default function LayoutControls({ className }: LayoutControlsProps) {
           </span>
           <select
             value={gridCols}
-            onChange={(e) => setGrid(Number(e.target.value), 0)}
+            onChange={(e) => setGrid(Number(e.target.value), gridRows)}
             className={cn(
               'rounded-[var(--radius-sm)] bg-bg-card border border-border-default',
               'text-sm font-bold text-text-primary px-2 py-1',

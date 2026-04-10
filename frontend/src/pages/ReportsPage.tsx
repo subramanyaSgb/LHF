@@ -57,7 +57,13 @@ const REPORT_SECTIONS = [
 // ---------------------------------------------------------------------------
 // GenerateModal
 // ---------------------------------------------------------------------------
-function GenerateReportModal({ onClose }: { onClose: () => void }) {
+function GenerateReportModal({
+  onClose,
+  onGenerate,
+}: {
+  onClose: () => void;
+  onGenerate: (report: Report) => void;
+}) {
   const groups = useGroupStore((s) => s.groups);
   const [type, setType] = useState<ReportType>('daily');
   const [dateFrom, setDateFrom] = useState('2026-04-09');
@@ -84,9 +90,9 @@ function GenerateReportModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg-overlay" role="dialog" aria-modal="true">
-      <div className="w-full max-w-lg bg-bg-secondary rounded-[var(--radius-lg)] border border-border-default shadow-[var(--shadow-elevated)] mx-4">
+      <div className="w-full max-w-lg max-h-[90vh] flex flex-col bg-bg-secondary rounded-[var(--radius-lg)] border border-border-default shadow-[var(--shadow-elevated)] mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border-default">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border-default shrink-0">
           <h2 className="text-lg font-bold text-text-primary">Generate Report</h2>
           <button onClick={onClose} className="p-1.5 text-text-muted hover:text-text-primary rounded-[var(--radius-sm)] hover:bg-bg-card-hover transition-colors">
             <X className="w-5 h-5" />
@@ -170,7 +176,7 @@ function GenerateReportModal({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border-default">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border-default shrink-0">
           <button
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary rounded-[var(--radius-md)] transition-colors"
@@ -178,7 +184,26 @@ function GenerateReportModal({ onClose }: { onClose: () => void }) {
             Cancel
           </button>
           <button
-            onClick={onClose}
+            onClick={() => {
+              const groupName = groupFilter === 'all'
+                ? 'All Groups'
+                : groups.find((g) => g.id === groupFilter)?.name ?? 'Unknown';
+              const title = `${type.charAt(0).toUpperCase() + type.slice(1)} Report — ${groupName}`;
+              const newReport: Report = {
+                id: `rpt-${Date.now()}`,
+                type,
+                title,
+                status: 'generating',
+                dateFrom,
+                dateTo,
+                generatedAt: new Date().toISOString(),
+                filePath: `/reports/${type}-${Date.now()}.pdf`,
+                fileSize: 0,
+                emailedTo: [],
+              };
+              onGenerate(newReport);
+              onClose();
+            }}
             className="flex items-center gap-2 px-5 py-2.5 bg-brand-primary hover:bg-brand-primary-hover text-white text-sm font-semibold rounded-[var(--radius-md)] transition-colors"
           >
             <FileText className="w-4 h-4" />
@@ -195,10 +220,24 @@ function GenerateReportModal({ onClose }: { onClose: () => void }) {
 // ---------------------------------------------------------------------------
 export default function ReportsPage(): React.JSX.Element {
   const [showModal, setShowModal] = useState(false);
-  const [reports] = useState<Report[]>(mockReports);
+  const [reports, setReports] = useState<Report[]>(mockReports);
+
+  const handleGenerate = (report: Report) => {
+    setReports((prev) => [report, ...prev]);
+    // Simulate report completion after 2 seconds
+    setTimeout(() => {
+      setReports((prev) =>
+        prev.map((r) =>
+          r.id === report.id
+            ? { ...r, status: 'completed' as const, fileSize: 1024 * 512 + Math.floor(Math.random() * 1024 * 1024) }
+            : r,
+        ),
+      );
+    }, 2000);
+  };
 
   return (
-    <div className="p-4 md:p-6 bg-bg-primary min-h-screen space-y-4">
+    <div className="p-4 md:p-6 min-h-full space-y-4">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
@@ -300,7 +339,7 @@ export default function ReportsPage(): React.JSX.Element {
       </div>
 
       {/* Modal */}
-      {showModal && <GenerateReportModal onClose={() => setShowModal(false)} />}
+      {showModal && <GenerateReportModal onClose={() => setShowModal(false)} onGenerate={handleGenerate} />}
     </div>
   );
 }

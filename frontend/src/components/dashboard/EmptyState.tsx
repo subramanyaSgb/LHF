@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { cn } from '@/utils/cn';
 import { useAuthStore } from '@/stores/authStore';
 import { Camera, Plus } from 'lucide-react';
@@ -35,8 +36,8 @@ export default function EmptyState({ className }: EmptyStateProps) {
 
       {/* CTA for admins */}
       {isAdmin && (
-        <a
-          href="/cameras"
+        <Link
+          to="/cameras"
           className={cn(
             'flex items-center gap-2 rounded-[var(--radius-lg)] px-8 py-4',
             'bg-brand-primary hover:bg-brand-primary-hover',
@@ -46,7 +47,7 @@ export default function EmptyState({ className }: EmptyStateProps) {
         >
           <Plus size={22} strokeWidth={3} />
           Add Camera
-        </a>
+        </Link>
       )}
     </div>
   );

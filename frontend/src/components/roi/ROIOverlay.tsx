@@ -63,8 +63,8 @@ export default function ROIOverlay({ cameraId, className }: ROIOverlayProps) {
 
       {/* ---- Config panel — right side, only when a ROI on this camera is selected ---- */}
       {selectedBelongsHere && (
-        <div className="absolute top-2 right-2 bottom-2 z-30 pointer-events-auto">
-          <ROIConfigPanel />
+        <div className="absolute top-2 right-2 bottom-2 z-30 pointer-events-auto overflow-hidden">
+          <ROIConfigPanel className="max-h-full" />
         </div>
       )}
     </div>

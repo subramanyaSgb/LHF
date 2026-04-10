@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { cn } from '@/utils/cn';
 import { formatTemp, getTempColor } from '@/utils/temperature';
 import { generateMockThermalFrame } from '@/utils/mock-data';
@@ -22,8 +22,11 @@ export default function CameraCard({ camera, onClick, className }: CameraCardPro
   const [avgTemp, setAvgTemp] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const getAlertsByCamera = useAlertStore((s) => s.getAlertsByCamera);
-  const activeAlerts = getAlertsByCamera(camera.id).filter((a) => a.status === 'active');
+  const alerts = useAlertStore((s) => s.alerts);
+  const activeAlerts = useMemo(
+    () => alerts.filter((a) => a.cameraId === camera.id && a.status === 'active'),
+    [alerts, camera.id],
+  );
   const hasActiveAlert = activeAlerts.length > 0;
   const hasCriticalAlert = activeAlerts.some((a) => a.priority === 'critical');
 

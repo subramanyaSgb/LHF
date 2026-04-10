@@ -118,7 +118,7 @@ export default function SettingsPage(): React.JSX.Element {
   }, []);
 
   return (
-    <div className="p-6 space-y-6 min-h-full">
+    <div className="p-4 md:p-6 space-y-6 min-h-full">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Settings className="w-7 h-7 text-brand-primary" />

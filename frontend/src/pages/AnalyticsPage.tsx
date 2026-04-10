@@ -295,7 +295,7 @@ export default function AnalyticsPage(): React.JSX.Element {
   };
 
   return (
-    <div className="p-4 md:p-6 bg-bg-primary min-h-screen space-y-4">
+    <div className="p-4 md:p-6 min-h-full space-y-4">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>

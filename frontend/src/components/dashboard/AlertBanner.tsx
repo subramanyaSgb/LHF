@@ -72,14 +72,14 @@ export default function AlertBanner({ className }: AlertBannerProps) {
   return (
     <div
       className={cn(
-        'fixed top-0 left-0 right-0 z-50 animate-slide-in',
+        'fixed top-0 left-0 right-0 z-[60] animate-slide-in',
         className,
       )}
     >
       <div
         className={cn(
           'mx-auto max-w-5xl mt-3 rounded-[var(--radius-lg)] shadow-[var(--shadow-elevated)]',
-          'flex items-center gap-4 px-5 py-3',
+          'flex items-center gap-4 px-5 py-3 backdrop-blur-sm',
           'border-l-4',
           isCritical && 'bg-status-critical/10 border-status-critical',
           isWarning && 'bg-status-warning/10 border-status-warning',

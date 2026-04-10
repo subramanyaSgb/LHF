@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useGroupStore } from '@/stores/groupStore';
 import { useCameraStore } from '@/stores/cameraStore';
 import {
@@ -33,6 +33,14 @@ function CreateGroupModal({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
 
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
   const handleCreate = () => {
     if (!name.trim()) return;
     const newGroup: CameraGroup = {
@@ -52,14 +60,14 @@ function CreateGroupModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg-overlay">
-      <div className="w-full max-w-md bg-bg-secondary rounded-[var(--radius-lg)] border border-border-default shadow-[var(--shadow-elevated)] mx-4">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border-default">
+      <div className="w-full max-w-md max-h-[90vh] flex flex-col bg-bg-secondary rounded-[var(--radius-lg)] border border-border-default shadow-[var(--shadow-elevated)] mx-4">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border-default shrink-0">
           <h2 className="text-lg font-bold text-text-primary">Create Group</h2>
           <button onClick={onClose} className="p-1.5 text-text-muted hover:text-text-primary rounded-[var(--radius-sm)] hover:bg-bg-card-hover transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="px-6 py-5 space-y-4">
+        <div className="px-6 py-5 space-y-4 overflow-y-auto">
           <div>
             <label className="block text-sm font-semibold text-text-primary mb-1.5">Group Name</label>
             <input
@@ -81,7 +89,7 @@ function CreateGroupModal({ onClose }: { onClose: () => void }) {
             />
           </div>
         </div>
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border-default">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border-default shrink-0">
           <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary rounded-[var(--radius-md)] transition-colors">
             Cancel
           </button>
@@ -389,7 +397,7 @@ export default function GroupsPage(): React.JSX.Element {
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   return (
-    <div className="p-4 md:p-6 bg-bg-primary min-h-screen space-y-4">
+    <div className="p-4 md:p-6 min-h-full space-y-4">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>

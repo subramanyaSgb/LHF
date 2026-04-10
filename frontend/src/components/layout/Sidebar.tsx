@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -67,9 +68,26 @@ const NAV_SECTIONS: NavSection[] = [
 ];
 
 export function Sidebar(): React.JSX.Element {
-  const { hasMinRole, logout, user } = useAuthStore();
-  const { sidebarCollapsed, toggleSidebar } = useLayoutStore();
+  const hasMinRole = useAuthStore((s) => s.hasMinRole);
+  const logout = useAuthStore((s) => s.logout);
+  const user = useAuthStore((s) => s.user);
+  const sidebarCollapsed = useLayoutStore((s) => s.sidebarCollapsed);
+  const toggleSidebar = useLayoutStore((s) => s.toggleSidebar);
   const navigate = useNavigate();
+
+  // Auto-collapse sidebar on screens narrower than 1024px
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 1023px)');
+    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      if (e.matches && !useLayoutStore.getState().sidebarCollapsed) {
+        toggleSidebar();
+      }
+    };
+    // Check on mount
+    handleChange(mql);
+    mql.addEventListener('change', handleChange);
+    return () => mql.removeEventListener('change', handleChange);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleLogout(): void {
     logout();

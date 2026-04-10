@@ -73,7 +73,7 @@ export default function DashboardPage() {
   const isEmpty = cameras.length === 0;
 
   return (
-    <div className="flex flex-col w-full h-full min-h-screen bg-bg-primary">
+    <div className="flex flex-col w-full h-full">
       {/* ---- Alert overlay ---- */}
       <AlertBanner />
 
@@ -89,7 +89,7 @@ export default function DashboardPage() {
           {/* ---- Main camera grid ---- */}
           <div
             ref={gridRef}
-            className={cn('flex-1 px-4 pb-20 overflow-y-auto')}
+            className={cn('flex-1 px-4 pb-4 overflow-y-auto')}
           >
             {/* Stitched group views */}
             {stitchedGroups.length > 0 && (
@@ -132,9 +132,9 @@ export default function DashboardPage() {
         </>
       )}
 
-      {/* ---- Health bar (fixed bottom) ---- */}
+      {/* ---- Health bar (sticky bottom — stays within the content flow) ---- */}
       {!isEmpty && (
-        <div className="fixed bottom-0 left-0 right-0 z-40">
+        <div className="sticky bottom-0 z-40 shrink-0">
           <HealthBar />
         </div>
       )}

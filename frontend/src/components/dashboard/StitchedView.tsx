@@ -29,15 +29,18 @@ function positionToGridArea(pos: StitchPosition, rows: number, cols: number): st
 }
 
 export default function StitchedView({ group, onCameraClick, className }: StitchedViewProps) {
-  const getCameraById = useCameraStore((s) => s.getCameraById);
-  const getAlertsByGroup = useAlertStore((s) => s.getAlertsByGroup);
+  const allCameras = useCameraStore((s) => s.cameras);
+  const allAlerts = useAlertStore((s) => s.alerts);
 
   const cameras = useMemo(
-    () => group.cameraIds.map((id) => getCameraById(id)).filter(Boolean) as Camera[],
-    [group.cameraIds, getCameraById],
+    () => allCameras.filter((c) => group.cameraIds.includes(c.id)),
+    [group.cameraIds, allCameras],
   );
 
-  const groupAlerts = getAlertsByGroup(group.id).filter((a) => a.status === 'active');
+  const groupAlerts = useMemo(
+    () => allAlerts.filter((a) => a.groupId === group.id && a.status === 'active'),
+    [allAlerts, group.id],
+  );
   const hasCritical = groupAlerts.some((a) => a.priority === 'critical');
 
   const onlineCount = cameras.filter((c) => c.status !== 'offline').length;

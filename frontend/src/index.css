@@ -162,7 +162,7 @@ body {
   display: flex;
 }
 
-/* Scrollbar styling for dark theme */
+/* Scrollbar styling — uses CSS variables so it adapts to both themes */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -179,4 +179,19 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-text-muted);
+}
+
+/* Light mode scrollbar — explicit overrides for browsers that don't
+   re-evaluate var() on theme change (e.g. older Chromium). */
+[data-theme="light"] ::-webkit-scrollbar-track {
+  background: #f3f4f6;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }

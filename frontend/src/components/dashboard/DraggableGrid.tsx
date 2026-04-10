@@ -69,7 +69,7 @@ export default function DraggableGrid({
       // Add any new cameras that aren't in the stored items yet
       const newItems: LayoutItem[] = cameras
         .filter((c) => !existingCameraIds.has(c.id))
-        .map((c, idx) => ({
+        .map((c) => ({
           id: `layout-${c.id}`,
           cameraId: c.id,
           x: 0,
