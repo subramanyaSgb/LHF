@@ -739,7 +739,7 @@ export default function ReportsPage(): React.JSX.Element {
                         {/* Download */}
                         <button
                           disabled={report.status !== 'completed'}
-                          onClick={() => report.status === 'completed' && downloadReportPdf(report)}}
+                          onClick={() => report.status === 'completed' && downloadReportPdf(report)}
                           className="p-1.5 text-text-muted hover:text-status-healthy hover:bg-status-healthy-bg disabled:opacity-30 disabled:cursor-not-allowed rounded-[var(--radius-sm)] transition-colors"
                           title="Download PDF"
                         >
