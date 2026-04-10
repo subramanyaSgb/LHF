@@ -7,6 +7,7 @@ instance is shared across the application lifetime.
 
 from functools import lru_cache
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -44,6 +45,13 @@ class Settings(BaseSettings):
     def cors_origins_list(self) -> list[str]:
         """Return CORS_ORIGINS as a list of strings."""
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+
+    @model_validator(mode="after")
+    def validate_secret_key(self) -> "Settings":
+        """Reject the placeholder SECRET_KEY in production."""
+        if not self.DEBUG and self.SECRET_KEY == "change-me-to-a-random-secret-key-in-production":
+            raise ValueError("SECRET_KEY must be changed in production!")
+        return self
 
     # ── SMS ─────────────────────────────────────────────────────────────
     SMS_GATEWAY_URL: str = ""

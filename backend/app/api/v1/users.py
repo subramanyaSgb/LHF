@@ -114,7 +114,7 @@ async def create_user(
         role=payload.role,
     )
     db.add(user)
-    await db.flush()
+    await db.commit()
     await db.refresh(user)
     return UserResponse.model_validate(user)
 
@@ -146,7 +146,7 @@ async def update_user(
     for field, value in update_data.items():
         setattr(user, field, value)
     user.updated_at = datetime.now(timezone.utc)
-    await db.flush()
+    await db.commit()
     await db.refresh(user)
     return UserResponse.model_validate(user)
 
@@ -170,5 +170,5 @@ async def delete_user(
         _admin: Authenticated admin user.
     """
     user = await _get_user_or_404(user_id, db)
-    await db.delete(user)
-    await db.flush()
+    user.is_active = False
+    await db.commit()

@@ -92,13 +92,13 @@ class AlertEngine:
         rule_type = rule.get("type")
         threshold = rule.get("threshold_value", 0)
 
-        if rule_type == "temperature_breach" and max_temp > threshold:
+        if rule_type == "high_temp" and max_temp > threshold:
             return self._create_alert(rule, camera_id, group_id, roi_id, max_temp, threshold, now)
 
-        if rule_type == "cold_zone" and min_temp < threshold:
+        if rule_type == "low_temp" and min_temp < threshold:
             return self._create_alert(rule, camera_id, group_id, roi_id, min_temp, threshold, now)
 
-        if rule_type == "rapid_spike":
+        if rule_type == "rate_of_change":
             rate = self._calculate_rate_of_change(roi_id or camera_id)
             rate_threshold = rule.get("rate_of_change", 50)
             if rate and rate > rate_threshold:
@@ -160,7 +160,7 @@ class AlertEngine:
         """Check if camera offline duration exceeds any rule threshold."""
         now = datetime.now(timezone.utc)
         for rule in self._rules:
-            if rule.get("type") != "camera_offline":
+            if rule.get("type") != "camera_offline":  # matches AlertRuleType.CAMERA_OFFLINE
                 continue
             duration_threshold = rule.get("duration", 60)
             if seconds_offline > duration_threshold:
@@ -173,7 +173,7 @@ class AlertEngine:
         """Check if camera body temperature exceeds safe range."""
         now = datetime.now(timezone.utc)
         for rule in self._rules:
-            if rule.get("type") != "device_overheat":
+            if rule.get("type") != "custom":
                 continue
             threshold = rule.get("threshold_value", 60)
             if body_temp > threshold:
@@ -185,7 +185,7 @@ class AlertEngine:
         now = datetime.now(timezone.utc)
         percent_free = (free_gb / total_gb * 100) if total_gb > 0 else 0
         for rule in self._rules:
-            if rule.get("type") != "disk_warning":
+            if rule.get("type") != "recording_failure":
                 continue
             threshold = rule.get("threshold_value", 10)  # percent
             if percent_free < threshold:

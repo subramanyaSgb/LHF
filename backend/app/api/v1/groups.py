@@ -170,7 +170,7 @@ async def create_group(
         **payload.model_dump(),
     )
     db.add(group)
-    await db.flush()
+    await db.commit()
     await db.refresh(group)
     return GroupResponse(
         id=group.id,
@@ -213,7 +213,7 @@ async def update_group(
     for field, value in update_data.items():
         setattr(group, field, value)
     group.updated_at = datetime.now(timezone.utc)
-    await db.flush()
+    await db.commit()
     await db.refresh(group)
     return _build_group_response(group)
 
@@ -242,7 +242,7 @@ async def delete_group(
         camera.group_id = None
     await db.flush()
     await db.delete(group)
-    await db.flush()
+    await db.commit()
 
 
 @router.post(
@@ -276,7 +276,7 @@ async def assign_camera_to_group(
         raise NotFoundException(detail=f"Camera {camera_id} not found")
 
     camera.group_id = group_id
-    await db.flush()
+    await db.commit()
     # Re-fetch to get updated relations
     group = await _get_group_or_404(group_id, db)
     return _build_group_response(group)
@@ -311,7 +311,7 @@ async def remove_camera_from_group(
             detail=f"Camera {camera_id} not found in group {group_id}"
         )
     camera.group_id = None
-    await db.flush()
+    await db.commit()
 
 
 @router.put(
@@ -364,7 +364,7 @@ async def update_stitch_mappings(
         db.add(sm)
 
     group.updated_at = datetime.now(timezone.utc)
-    await db.flush()
+    await db.commit()
 
     # Re-fetch with updated relations
     group = await _get_group_or_404(group_id, db)

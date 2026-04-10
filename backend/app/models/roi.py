@@ -7,6 +7,7 @@ and stored as ROIData time-series records.
 
 import enum
 import uuid
+from datetime import datetime
 
 from sqlalchemy import DateTime, Enum, Float, ForeignKey, Integer, String, Boolean, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -75,12 +76,12 @@ class ROI(Base):
         nullable=True,
     )
 
-    created_at: Mapped[str] = mapped_column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
     )
-    updated_at: Mapped[str] = mapped_column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
@@ -102,7 +103,7 @@ class ROI(Base):
     data_points: Mapped[list["ROIData"]] = relationship(
         "ROIData",
         back_populates="roi",
-        lazy="dynamic",
+        lazy="selectin",
         cascade="all, delete-orphan",
     )
 
@@ -169,7 +170,7 @@ class ROIData(Base):
         nullable=False,
         index=True,
     )
-    timestamp: Mapped[str] = mapped_column(
+    timestamp: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),

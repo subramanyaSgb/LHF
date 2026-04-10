@@ -8,6 +8,7 @@ or email addresses that should be notified.
 
 import enum
 import uuid
+from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -116,12 +117,12 @@ class AlertRule(Base):
     sms_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     email_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
-    created_at: Mapped[str] = mapped_column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
     )
-    updated_at: Mapped[str] = mapped_column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
@@ -138,7 +139,7 @@ class AlertRule(Base):
     alerts: Mapped[list["Alert"]] = relationship(
         "Alert",
         back_populates="rule",
-        lazy="dynamic",
+        lazy="selectin",
     )
 
     def __repr__(self) -> str:
@@ -219,11 +220,13 @@ class Alert(Base):
     priority: Mapped[AlertPriority] = mapped_column(
         Enum(AlertPriority, name="alert_priority", create_type=False),
         nullable=False,
+        index=True,
     )
     status: Mapped[AlertStatus] = mapped_column(
         Enum(AlertStatus, name="alert_status"),
         nullable=False,
         default=AlertStatus.ACTIVE,
+        index=True,
     )
     message: Mapped[str | None] = mapped_column(String(1000), nullable=True)
 
@@ -231,6 +234,7 @@ class Alert(Base):
         String(36),
         ForeignKey("cameras.id"),
         nullable=True,
+        index=True,
     )
     group_id: Mapped[str | None] = mapped_column(
         String(36),
@@ -245,17 +249,17 @@ class Alert(Base):
 
     value: Mapped[float | None] = mapped_column(Float, nullable=True)
     threshold: Mapped[float | None] = mapped_column(Float, nullable=True)
-    predicted_breach_time: Mapped[str | None] = mapped_column(
+    predicted_breach_time: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
     )
 
-    timestamp: Mapped[str] = mapped_column(
+    timestamp: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
     )
-    acknowledged_at: Mapped[str | None] = mapped_column(
+    acknowledged_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
     )
@@ -264,15 +268,16 @@ class Alert(Base):
         ForeignKey("users.id"),
         nullable=True,
     )
-    resolved_at: Mapped[str | None] = mapped_column(
+    resolved_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
     )
 
-    created_at: Mapped[str] = mapped_column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
+        index=True,
     )
 
     # ── Relationships ───────────────────────────────────────────────────

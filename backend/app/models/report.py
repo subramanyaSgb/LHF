@@ -6,6 +6,7 @@ Each report covers a date range and is stored as a file on disk.
 
 import enum
 import uuid
+from datetime import datetime
 
 from sqlalchemy import DateTime, Enum, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
@@ -66,16 +67,16 @@ class Report(Base):
         default=ReportStatus.PENDING,
     )
 
-    date_from: Mapped[str] = mapped_column(DateTime(timezone=True), nullable=False)
-    date_to: Mapped[str] = mapped_column(DateTime(timezone=True), nullable=False)
-    generated_at: Mapped[str | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    date_from: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    date_to: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    generated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     file_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     file_size: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     emailed_to: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON array string
 
-    created_at: Mapped[str] = mapped_column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),

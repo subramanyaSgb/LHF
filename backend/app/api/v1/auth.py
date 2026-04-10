@@ -164,7 +164,7 @@ async def login(
 
     # Update last login timestamp
     user.last_login = datetime.now(timezone.utc)
-    await db.flush()
+    await db.commit()
 
     access_token = create_access_token(data={"sub": user.id})
 
@@ -222,7 +222,7 @@ async def change_password(
 
     current_user.hashed_password = get_password_hash(payload.new_password)
     current_user.updated_at = datetime.now(timezone.utc)
-    await db.flush()
+    await db.commit()
     await db.refresh(current_user)
 
     return UserResponse.model_validate(current_user)

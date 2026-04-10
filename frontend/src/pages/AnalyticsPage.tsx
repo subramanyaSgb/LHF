@@ -23,6 +23,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  Cell,
 } from 'recharts';
 
 // ---------------------------------------------------------------------------
@@ -110,9 +111,7 @@ const LADLE_DATA = [
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
-function TemperatureTimeline() {
-  const data = useMemo(() => generateTemperatureTimeline(), []);
-
+function TemperatureTimeline({ data }: { data: ReturnType<typeof generateTemperatureTimeline> }) {
   return (
     <div className="bg-bg-card rounded-[var(--radius-lg)] border border-border-default p-5">
       <h3 className="text-base font-semibold text-text-primary mb-4">Temperature Over Time</h3>
@@ -171,9 +170,7 @@ function HeatSummaryChart() {
   );
 }
 
-function AlertFrequencyChart() {
-  const data = useMemo(() => generateAlertFrequency(), []);
-
+function AlertFrequencyChart({ data }: { data: ReturnType<typeof generateAlertFrequency> }) {
   return (
     <div className="bg-bg-card rounded-[var(--radius-lg)] border border-border-default p-5">
       <h3 className="text-base font-semibold text-text-primary mb-4">Alerts by Hour (Last 24h)</h3>
@@ -254,7 +251,7 @@ function CameraUptimeChart() {
           />
           <Bar dataKey="uptime" name="Uptime" radius={[0, 4, 4, 0]} barSize={28}>
             {data.map((entry, idx) => (
-              <rect key={idx} fill={entry.fill} />
+              <Cell key={idx} fill={entry.fill} />
             ))}
           </Bar>
         </BarChart>
@@ -279,14 +276,17 @@ export default function AnalyticsPage(): React.JSX.Element {
   const [dateFrom, setDateFrom] = useState('2026-04-09');
   const [dateTo, setDateTo] = useState('2026-04-10');
 
+  const temperatureData = useMemo(() => generateTemperatureTimeline(), []);
+  const alertData = useMemo(() => generateAlertFrequency(), []);
+
   const renderContent = () => {
     switch (activeTab) {
       case 'temperature':
-        return <TemperatureTimeline />;
+        return <TemperatureTimeline data={temperatureData} />;
       case 'heat':
         return <HeatSummaryChart />;
       case 'alerts':
-        return <AlertFrequencyChart />;
+        return <AlertFrequencyChart data={alertData} />;
       case 'ladle':
         return <LadleLifePanel />;
       case 'uptime':

@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
 from app.core.database import get_db
-from app.core.exceptions import AppException, NotFoundException
+from app.core.exceptions import AppException, ForbiddenException, NotFoundException
 from app.api.v1.auth import get_current_user, require_role
 from app.models.report import Report, ReportStatus, ReportType
 from app.models.user import User
@@ -127,7 +127,7 @@ async def generate_report(
         date_to=payload.date_to,
     )
     db.add(report)
-    await db.flush()
+    await db.commit()
     await db.refresh(report)
     return ReportResponse.model_validate(report)
 
@@ -163,7 +163,11 @@ async def download_report(
             detail="Report has not been generated yet",
         )
 
-    file = Path(report.file_path)
+    report_base = Path(settings.REPORT_STORAGE_PATH).resolve()
+    file = Path(report.file_path).resolve()
+    if not str(file).startswith(str(report_base)):
+        raise ForbiddenException("Invalid file path")
+
     if not file.exists():
         raise NotFoundException(detail="Report file not found on disk")
 
@@ -203,4 +207,4 @@ async def delete_report(
             file.unlink()
 
     await db.delete(report)
-    await db.flush()
+    await db.commit()

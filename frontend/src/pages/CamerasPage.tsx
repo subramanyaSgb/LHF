@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { cn } from '@/utils/cn';
 import { useCameraStore } from '@/stores/cameraStore';
 import { useGroupStore } from '@/stores/groupStore';
@@ -86,6 +86,14 @@ function AddCameraModal({
 
   const isValid = name.trim() && ip.trim() && !ipError && ipPattern.test(ip);
 
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
   const handleSubmit = () => {
     if (!isValid) return;
     const newCamera: CameraType = {
@@ -111,7 +119,7 @@ function AddCameraModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg-overlay">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg-overlay" role="dialog" aria-modal="true">
       <div className="w-full max-w-lg bg-bg-secondary rounded-[var(--radius-lg)] border border-border-default shadow-[var(--shadow-elevated)] mx-4">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border-default">
           <h2 className="text-lg font-bold text-text-primary">Add Camera</h2>
@@ -224,8 +232,16 @@ function DeleteConfirmModal({
   onClose: () => void;
   onConfirm: () => void;
 }) {
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg-overlay">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg-overlay" role="dialog" aria-modal="true">
       <div className="w-full max-w-sm bg-bg-secondary rounded-[var(--radius-lg)] border border-border-default shadow-[var(--shadow-elevated)] mx-4 p-6 text-center">
         <div className="w-12 h-12 bg-status-critical-bg rounded-full flex items-center justify-center mx-auto mb-4">
           <Trash2 className="w-6 h-6 text-status-critical" />
@@ -253,7 +269,7 @@ function DeleteConfirmModal({
 export default function CamerasPage(): React.JSX.Element {
   const { cameras, addCamera, removeCamera } = useCameraStore();
   const groups = useGroupStore((s) => s.groups);
-  useAuthStore((s) => s.hasMinRole('admin'));
+  const isAdmin = useAuthStore((s) => s.hasMinRole('admin'));
 
   const [search, setSearch] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -297,13 +313,15 @@ export default function CamerasPage(): React.JSX.Element {
             {cameras.length} total cameras | {onlineCount} online
           </p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-brand-primary hover:bg-brand-primary-hover text-white text-sm font-semibold rounded-[var(--radius-md)] transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Add Camera
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-brand-primary hover:bg-brand-primary-hover text-white text-sm font-semibold rounded-[var(--radius-md)] transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Add Camera
+          </button>
+        )}
       </div>
 
       {/* Summary cards */}
@@ -434,13 +452,15 @@ export default function CamerasPage(): React.JSX.Element {
                         >
                           <Pencil className="w-4 h-4" />
                         </button>
-                        <button
-                          onClick={() => setDeleteTarget(cam)}
-                          className="p-1.5 text-text-muted hover:text-status-critical rounded-[var(--radius-sm)] hover:bg-bg-card-hover transition-colors"
-                          title="Remove"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {isAdmin && (
+                          <button
+                            onClick={() => setDeleteTarget(cam)}
+                            className="p-1.5 text-text-muted hover:text-status-critical rounded-[var(--radius-sm)] hover:bg-bg-card-hover transition-colors"
+                            title="Remove"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

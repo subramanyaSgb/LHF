@@ -26,10 +26,13 @@ export default function ROIOverlay({ cameraId, className }: ROIOverlayProps) {
 
   const cameraROIs = rois.filter((r) => r.cameraId === cameraId);
 
+  const cameraROIsRef = useRef(cameraROIs);
+  cameraROIsRef.current = cameraROIs;
+
   // ---- Generate mock temperature data every second ----
   useEffect(() => {
     const tick = () => {
-      for (const roi of cameraROIs) {
+      for (const roi of cameraROIsRef.current) {
         setROIData(roi.id, generateMockROIData(roi.id));
       }
     };
@@ -41,9 +44,7 @@ export default function ROIOverlay({ cameraId, className }: ROIOverlayProps) {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-    // Re-subscribe when the list of ROI IDs changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cameraROIs.map((r) => r.id).join(','), setROIData]);
+  }, [setROIData]);
 
   // Check if the selected ROI belongs to this camera
   const selectedBelongsHere = cameraROIs.some((r) => r.id === selectedRoiId);

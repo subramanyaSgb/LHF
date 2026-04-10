@@ -18,13 +18,14 @@ from app.core.exceptions import NotFoundException
 from app.api.v1.auth import get_current_user, require_role
 from app.models.camera import Camera
 from app.models.user import User
+from app.config import get_settings
 from app.schemas.camera import (
     CameraCreate,
     CameraResponse,
     CameraUpdate,
     ThermalFrameResponse,
 )
-from app.services.camera_mock import mock_camera_service
+from app.services.camera_interface import get_camera_service
 
 router = APIRouter(prefix="/cameras", tags=["cameras"])
 
@@ -143,7 +144,7 @@ async def create_camera(
         **payload.model_dump(),
     )
     db.add(camera)
-    await db.flush()
+    await db.commit()
     await db.refresh(camera)
     return CameraResponse.model_validate(camera)
 
@@ -175,7 +176,7 @@ async def update_camera(
     for field, value in update_data.items():
         setattr(camera, field, value)
     camera.updated_at = datetime.now(timezone.utc)
-    await db.flush()
+    await db.commit()
     await db.refresh(camera)
     return CameraResponse.model_validate(camera)
 
@@ -200,7 +201,7 @@ async def delete_camera(
     """
     camera = await _get_camera_or_404(camera_id, db)
     await db.delete(camera)
-    await db.flush()
+    await db.commit()
 
 
 @router.get(
@@ -228,12 +229,13 @@ async def get_latest_frame(
     """
     await _get_camera_or_404(camera_id, db)
 
-    # Ensure the mock service knows about this camera
-    if not mock_camera_service.is_running(camera_id):
-        mock_camera_service.register_camera(camera_id)
-        mock_camera_service.start(camera_id)
+    camera_service = get_camera_service(get_settings().CAMERA_MODE)
+    # Ensure the camera service knows about this camera
+    if not camera_service.is_running(camera_id):
+        camera_service.register_camera(camera_id)
+        camera_service.start(camera_id)
 
-    frame = mock_camera_service.generate_frame(camera_id)
+    frame = camera_service.generate_frame(camera_id)
     return ThermalFrameResponse(
         camera_id=frame.camera_id,
         timestamp=str(frame.timestamp),

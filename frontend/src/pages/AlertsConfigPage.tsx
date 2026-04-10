@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/utils/cn';
 import { useAlertStore } from '@/stores/alertStore';
 import { useGroupStore } from '@/stores/groupStore';
@@ -77,6 +77,14 @@ function RuleModal({
   const [smsEnabled, setSmsEnabled] = useState(rule?.smsEnabled ?? true);
   const [emailEnabled, setEmailEnabled] = useState(rule?.emailEnabled ?? false);
 
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
   const handleSubmit = () => {
     onSave({
       name,
@@ -95,7 +103,7 @@ function RuleModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg-overlay">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg-overlay" role="dialog" aria-modal="true">
       <div className="w-full max-w-lg bg-bg-secondary rounded-[var(--radius-lg)] border border-border-default shadow-[var(--shadow-elevated)] mx-4">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border-default">
           <h2 className="text-lg font-bold text-text-primary">

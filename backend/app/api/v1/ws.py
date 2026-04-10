@@ -7,6 +7,7 @@ import time
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
+from app.config import get_settings
 from app.services.camera_interface import get_camera_service
 from app.services.camera_mock import ThermalFrame
 from app.services.websocket_manager import ws_manager
@@ -26,7 +27,7 @@ async def camera_feed(websocket: WebSocket, camera_id: str) -> None:
     channel = f"camera:{camera_id}"
     await ws_manager.connect(websocket, channel)
 
-    camera_service = get_camera_service("mock")
+    camera_service = get_camera_service(get_settings().CAMERA_MODE)
     camera_service.register_camera(camera_id)
     camera_service.start(camera_id)
 

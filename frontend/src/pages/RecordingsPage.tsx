@@ -152,6 +152,8 @@ function PlayerView({
   const [showAnnotationInput, setShowAnnotationInput] = useState(false);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const speedRef = useRef(speed);
+  speedRef.current = speed;
 
   const group = groups.find((g) => g.id === recording.groupId);
   const camera = cameras.find((c) => c.id === recording.cameraId);
@@ -162,7 +164,7 @@ function PlayerView({
     if (playing) {
       intervalRef.current = setInterval(() => {
         setCurrentTime((prev) => {
-          const next = prev + speed;
+          const next = prev + speedRef.current;
           if (next >= recording.duration) {
             setPlaying(false);
             return recording.duration;
@@ -174,7 +176,7 @@ function PlayerView({
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [playing, speed, recording.duration]);
+  }, [playing, recording.duration]);
 
   const handleScrub = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Number(e.target.value);

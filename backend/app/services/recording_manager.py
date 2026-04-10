@@ -16,6 +16,7 @@ class RecordingManager:
     def __init__(self, storage_path: str = "./recordings") -> None:
         self._storage_path = storage_path
         self._active_recordings: dict[str, dict[str, Any]] = {}  # camera_id -> recording info
+        self._frame_counts: dict[str, int] = {}  # camera_id -> frame count
         os.makedirs(storage_path, exist_ok=True)
 
     def start_recording(
@@ -72,6 +73,7 @@ class RecordingManager:
         }
 
         self._active_recordings[camera_id] = recording
+        self._frame_counts[camera_id] = 0
         logger.info(f"Started recording {recording_id} for camera {camera_id} (heat: {heat_number})")
         return recording
 
@@ -85,6 +87,7 @@ class RecordingManager:
             Completed recording info, or None if not recording.
         """
         recording = self._active_recordings.pop(camera_id, None)
+        self._frame_counts.pop(camera_id, None)
         if not recording:
             logger.warning(f"Camera {camera_id} is not recording")
             return None
@@ -116,8 +119,10 @@ class RecordingManager:
 
         if max_temp > recording["peak_temp"]:
             recording["peak_temp"] = max_temp
-        # Running average approximation
-        recording["avg_temp"] = (recording["avg_temp"] + avg_temp) / 2
+        # Correct running average
+        self._frame_counts[camera_id] = self._frame_counts.get(camera_id, 0) + 1
+        count = self._frame_counts[camera_id]
+        recording["avg_temp"] = ((recording["avg_temp"] * (count - 1)) + avg_temp) / count
         recording["duration"] = int(time.time() - recording["start_timestamp"])
 
     def increment_alert_count(self, camera_id: str) -> None:

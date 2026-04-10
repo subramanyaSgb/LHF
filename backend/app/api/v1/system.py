@@ -121,7 +121,7 @@ async def create_shift_note(
         created_by=current_user.id,
     )
     db.add(note)
-    await db.flush()
+    await db.commit()
     await db.refresh(note)
     return ShiftNoteResponse.model_validate(note)
 

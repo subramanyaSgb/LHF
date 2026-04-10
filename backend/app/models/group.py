@@ -5,6 +5,7 @@ and optionally supports stitching their feeds into a single panoramic view.
 """
 
 import uuid
+from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -42,12 +43,12 @@ class CameraGroup(Base):
     stitch_rows: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     stitch_cols: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
 
-    created_at: Mapped[str] = mapped_column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
     )
-    updated_at: Mapped[str] = mapped_column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),

@@ -90,7 +90,7 @@ async def bulk_update_settings(
             setting.value = item.value
             setting.updated_at = datetime.now(timezone.utc)
 
-        await db.flush()
+        await db.commit()
         await db.refresh(setting)
         results.append(SettingResponse.model_validate(setting))
 
@@ -167,6 +167,6 @@ async def update_setting(
         setting.value = payload.value
         setting.updated_at = datetime.now(timezone.utc)
 
-    await db.flush()
+    await db.commit()
     await db.refresh(setting)
     return SettingResponse.model_validate(setting)

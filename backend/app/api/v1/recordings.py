@@ -174,7 +174,7 @@ async def start_recording(
         start_time=datetime.now(timezone.utc),
     )
     db.add(recording)
-    await db.flush()
+    await db.commit()
     await db.refresh(recording)
     return RecordingResponse.model_validate(recording)
 
@@ -225,7 +225,7 @@ async def stop_recording(
             start = start.replace(tzinfo=timezone.utc)
         recording.duration = int((now - start).total_seconds())
 
-    await db.flush()
+    await db.commit()
     await db.refresh(recording)
     return RecordingResponse.model_validate(recording)
 
@@ -254,7 +254,7 @@ async def toggle_recording_flag(
     """
     recording = await _get_recording_or_404(recording_id, db)
     recording.is_flagged = not recording.is_flagged
-    await db.flush()
+    await db.commit()
     await db.refresh(recording)
     return RecordingResponse.model_validate(recording)
 
@@ -278,8 +278,8 @@ async def delete_recording(
         _admin: Authenticated admin user.
     """
     recording = await _get_recording_or_404(recording_id, db)
-    await db.delete(recording)
-    await db.flush()
+    recording.status = RecordingStatus.DELETED
+    await db.commit()
 
 
 # ── Annotation Endpoints ───────────────────────────────────────────────
@@ -355,6 +355,6 @@ async def create_annotation(
         created_by=current_user.id,
     )
     db.add(annotation)
-    await db.flush()
+    await db.commit()
     await db.refresh(annotation)
     return AnnotationResponse.model_validate(annotation)

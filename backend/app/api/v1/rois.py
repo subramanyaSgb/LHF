@@ -165,7 +165,7 @@ async def create_roi(
         )
         db.add(point)
 
-    await db.flush()
+    await db.commit()
     await db.refresh(roi)
     return ROIResponse.model_validate(roi)
 
@@ -223,7 +223,7 @@ async def update_roi(
             db.add(point)
 
     roi.updated_at = datetime.now(timezone.utc)
-    await db.flush()
+    await db.commit()
     await db.refresh(roi)
     return ROIResponse.model_validate(roi)
 
@@ -248,7 +248,7 @@ async def delete_roi(
     """
     roi = await _get_roi_or_404(roi_id, db)
     await db.delete(roi)
-    await db.flush()
+    await db.commit()
 
 
 @router.get(

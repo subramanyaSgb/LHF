@@ -8,6 +8,7 @@ database and seeds a default admin account on first startup.
 from __future__ import annotations
 
 import logging
+import secrets
 import uuid
 from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
@@ -50,18 +51,20 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     async with AsyncSessionLocal() as session:
         result = await session.execute(select(User))
         if result.scalar_one_or_none() is None:
+            default_password = secrets.token_urlsafe(16)
             admin = User(
                 id=str(uuid.uuid4()),
                 username="admin",
                 display_name="System Administrator",
                 email="admin@infrasense.local",
-                hashed_password=get_password_hash("admin123"),
+                hashed_password=get_password_hash(default_password),
                 role=UserRole.ADMIN,
                 is_active=True,
             )
             session.add(admin)
             await session.commit()
-            logger.info("Default admin user created (username=admin, password=admin123)")
+            print(f"Default admin user created — username: admin, password: {default_password}")
+            logger.info("Default admin user created (username=admin)")
         else:
             logger.info("Users already exist — skipping default admin creation")
 

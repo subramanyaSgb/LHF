@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   Settings,
   Globe,
@@ -15,7 +15,6 @@ import { Input } from '@/components/common/Input';
 import { Select } from '@/components/common/Select';
 import { Toggle } from '@/components/common/Toggle';
 import { Button } from '@/components/common/Button';
-import { cn as _cn } from '@/utils/cn';
 
 // ---------------------------------------------------------------------------
 //  Section wrapper
@@ -107,11 +106,13 @@ export default function SettingsPage(): React.JSX.Element {
 
   // Save states
   const [savedSections, setSavedSections] = useState<Record<string, boolean>>({});
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(saveTimerRef.current), []);
 
   const handleSave = useCallback((section: string) => {
     // Simulate save
     setSavedSections((prev) => ({ ...prev, [section]: true }));
-    setTimeout(() => {
+    saveTimerRef.current = setTimeout(() => {
       setSavedSections((prev) => ({ ...prev, [section]: false }));
     }, 2000);
   }, []);

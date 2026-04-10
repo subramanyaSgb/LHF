@@ -135,7 +135,7 @@ async def create_alert_rule(
 
     rule = AlertRule(id=str(uuid.uuid4()), **data)
     db.add(rule)
-    await db.flush()
+    await db.commit()
     await db.refresh(rule)
     return AlertRuleResponse.model_validate(rule)
 
@@ -170,7 +170,7 @@ async def update_alert_rule(
     for field, value in update_data.items():
         setattr(rule, field, value)
     rule.updated_at = datetime.now(timezone.utc)
-    await db.flush()
+    await db.commit()
     await db.refresh(rule)
     return AlertRuleResponse.model_validate(rule)
 
@@ -195,7 +195,7 @@ async def delete_alert_rule(
     """
     rule = await _get_rule_or_404(rule_id, db)
     await db.delete(rule)
-    await db.flush()
+    await db.commit()
 
 
 # ── Alert Endpoints ─────────────────────────────────────────────────────
@@ -275,7 +275,7 @@ async def acknowledge_alert(
     alert.status = AlertStatus.ACKNOWLEDGED
     alert.acknowledged_by = current_user.id
     alert.acknowledged_at = datetime.now(timezone.utc)
-    await db.flush()
+    await db.commit()
     await db.refresh(alert)
     return AlertResponse.model_validate(alert)
 
@@ -303,6 +303,6 @@ async def resolve_alert(
     alert = await _get_alert_or_404(alert_id, db)
     alert.status = AlertStatus.RESOLVED
     alert.resolved_at = datetime.now(timezone.utc)
-    await db.flush()
+    await db.commit()
     await db.refresh(alert)
     return AlertResponse.model_validate(alert)

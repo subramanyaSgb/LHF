@@ -17,12 +17,6 @@ const FONT_SIZES: Record<'small' | 'medium' | 'large', number> = {
 
 // Default ROI colors assigned during creation
 const DEFAULT_COLORS = ['#22c55e', '#f59e0b', '#3b82f6', '#ef4444', '#a855f7', '#ffffff'];
-let colorIndex = 0;
-function nextColor(): string {
-  const c = DEFAULT_COLORS[colorIndex % DEFAULT_COLORS.length];
-  colorIndex++;
-  return c;
-}
 
 // ============================================================
 // Helpers — coordinate conversion
@@ -123,7 +117,7 @@ export default function ROICanvas({ cameraId, className }: ROICanvasProps) {
         name: `${shapeNames[ds.shape]} ${count}`,
         shape: ds.shape,
         points: ds.points,
-        color: nextColor(),
+        color: DEFAULT_COLORS[cameraROIs.length % DEFAULT_COLORS.length],
         fontSize: 'medium',
         showMin: false,
         showMax: true,
@@ -179,13 +173,18 @@ export default function ROICanvas({ cameraId, className }: ROICanvasProps) {
       drawInProgress(ctx, drawState, w, h);
     }
 
-    animRef.current = requestAnimationFrame(render);
   }, [cameraROIs, drawState, roiData, selectedRoiId, syncSize]);
 
   useEffect(() => {
-    animRef.current = requestAnimationFrame(render);
+    const frame = () => {
+      render();
+      if (drawState) {
+        animRef.current = requestAnimationFrame(frame);
+      }
+    };
+    animRef.current = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(animRef.current);
-  }, [render]);
+  }, [render, drawState]);
 
   // ---- Resize observer ----
   useEffect(() => {
@@ -252,7 +251,7 @@ export default function ROICanvas({ cameraId, className }: ROICanvasProps) {
             name: `Point ${cameraROIs.length + 1}`,
             shape: 'point',
             points: [norm],
-            color: nextColor(),
+            color: DEFAULT_COLORS[cameraROIs.length % DEFAULT_COLORS.length],
             fontSize: 'medium',
             showMin: false,
             showMax: true,

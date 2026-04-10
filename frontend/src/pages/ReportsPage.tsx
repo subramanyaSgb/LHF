@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/utils/cn';
 import { useGroupStore } from '@/stores/groupStore';
 import { mockReports } from '@/utils/mock-data';
@@ -65,6 +65,14 @@ function GenerateReportModal({ onClose }: { onClose: () => void }) {
   const [groupFilter, setGroupFilter] = useState('all');
   const [checkedSections, setCheckedSections] = useState<Set<string>>(new Set(REPORT_SECTIONS));
 
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
   const toggleSection = (s: string) => {
     setCheckedSections((prev) => {
       const next = new Set(prev);
@@ -75,7 +83,7 @@ function GenerateReportModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg-overlay">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg-overlay" role="dialog" aria-modal="true">
       <div className="w-full max-w-lg bg-bg-secondary rounded-[var(--radius-lg)] border border-border-default shadow-[var(--shadow-elevated)] mx-4">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border-default">

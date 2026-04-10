@@ -10,8 +10,6 @@ import random
 import time
 from dataclasses import dataclass, field
 
-import numpy as np
-
 
 @dataclass
 class ThermalFrame:

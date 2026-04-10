@@ -7,6 +7,7 @@ mark notable moments inside a recording.
 
 import enum
 import uuid
+from datetime import datetime
 
 from sqlalchemy import BigInteger, Boolean, DateTime, Enum, Float, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -67,6 +68,7 @@ class Recording(Base):
         String(36),
         ForeignKey("cameras.id"),
         nullable=False,
+        index=True,
     )
     group_id: Mapped[str | None] = mapped_column(
         String(36),
@@ -82,14 +84,16 @@ class Recording(Base):
         Enum(RecordingStatus, name="recording_status"),
         nullable=False,
         default=RecordingStatus.IN_PROGRESS,
+        index=True,
     )
 
-    start_time: Mapped[str] = mapped_column(
+    start_time: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
+        index=True,
     )
-    end_time: Mapped[str | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    end_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     duration: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     peak_temp: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -106,7 +110,7 @@ class Recording(Base):
         default=RecordingTrigger.MANUAL,
     )
 
-    created_at: Mapped[str] = mapped_column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
@@ -156,7 +160,7 @@ class RecordingAnnotation(Base):
         nullable=True,
     )
 
-    created_at: Mapped[str] = mapped_column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),

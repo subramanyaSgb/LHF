@@ -141,7 +141,7 @@ async def create_preset(
         value=value,
     )
     db.add(setting)
-    await db.flush()
+    await db.commit()
     await db.refresh(setting)
     return _setting_to_preset(setting)
 
@@ -174,4 +174,4 @@ async def delete_preset(
     if setting is None or not setting.key.startswith(_KEY_PREFIX):
         raise NotFoundException(detail=f"Layout preset {preset_id} not found")
     await db.delete(setting)
-    await db.flush()
+    await db.commit()

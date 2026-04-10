@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   UserCircle,
   Shield,
@@ -68,6 +68,14 @@ export default function ProfilePage(): React.JSX.Element {
   // Display prefs
   const [sidebarDefault, setSidebarDefault] = useState<'expanded' | 'collapsed'>('expanded');
 
+  // Timer refs for cleanup
+  const passwordTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const prefsTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => {
+    clearTimeout(passwordTimerRef.current);
+    clearTimeout(prefsTimerRef.current);
+  }, []);
+
   // Handle password change
   const handlePasswordChange = useCallback(() => {
     setPasswordError('');
@@ -90,13 +98,13 @@ export default function ProfilePage(): React.JSX.Element {
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
-    setTimeout(() => setPasswordSaved(false), 3000);
+    passwordTimerRef.current = setTimeout(() => setPasswordSaved(false), 3000);
   }, [currentPassword, newPassword, confirmPassword]);
 
   // Handle notification prefs save
   const handleSavePrefs = useCallback(() => {
     setPrefsSaved(true);
-    setTimeout(() => setPrefsSaved(false), 3000);
+    prefsTimerRef.current = setTimeout(() => setPrefsSaved(false), 3000);
   }, []);
 
   if (!user) {

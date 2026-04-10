@@ -7,6 +7,7 @@ detection history.
 
 import enum
 import uuid
+from datetime import datetime
 
 from sqlalchemy import Boolean, Date, DateTime, Enum, Float, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
@@ -52,7 +53,7 @@ class ShiftNote(Base):
         nullable=True,
     )
 
-    created_at: Mapped[str] = mapped_column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
@@ -93,13 +94,13 @@ class AuditEntry(Base):
     target: Mapped[str | None] = mapped_column(String(300), nullable=True)
     details: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    timestamp: Mapped[str] = mapped_column(
+    timestamp: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
         index=True,
     )
-    created_at: Mapped[str] = mapped_column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
@@ -138,15 +139,15 @@ class Ladle(Base):
     )
     life_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     max_life: Mapped[int] = mapped_column(Integer, nullable=False, default=100)
-    last_used: Mapped[str | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_used: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     maintenance_due: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
-    created_at: Mapped[str] = mapped_column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
     )
-    updated_at: Mapped[str] = mapped_column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
@@ -196,7 +197,7 @@ class HotSpotEntry(Base):
     position_y: Mapped[float] = mapped_column(Float, nullable=False)
     peak_temp: Mapped[float] = mapped_column(Float, nullable=False)
 
-    timestamp: Mapped[str] = mapped_column(
+    timestamp: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),

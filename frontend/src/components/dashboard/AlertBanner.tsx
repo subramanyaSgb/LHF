@@ -17,10 +17,8 @@ interface AlertBannerProps {
 }
 
 export default function AlertBanner({ className }: AlertBannerProps) {
-  const getUnacknowledgedAlerts = useAlertStore((s) => s.getUnacknowledgedAlerts);
+  const unacknowledged = useAlertStore((s) => s.alerts.filter(a => a.status === 'active'));
   const acknowledgeAlert = useAlertStore((s) => s.acknowledgeAlert);
-
-  const unacknowledged = getUnacknowledgedAlerts();
   const latestAlert = unacknowledged.length > 0 ? unacknowledged[0] : null;
 
   const [dismissed, setDismissed] = useState<string | null>(null);

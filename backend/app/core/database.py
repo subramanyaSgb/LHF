@@ -36,19 +36,13 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Yield an async database session for FastAPI dependency injection.
 
     The session is automatically closed when the request finishes.
+    Write endpoints must call ``await db.commit()`` explicitly.
 
     Yields:
         AsyncSession: A scoped database session.
     """
     async with AsyncSessionLocal() as session:
-        try:
-            yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
-        finally:
-            await session.close()
+        yield session
 
 
 async def init_db() -> None:

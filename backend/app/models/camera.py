@@ -7,6 +7,7 @@ real time by the camera management service.
 
 import enum
 import uuid
+from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -61,6 +62,7 @@ class Camera(Base):
         Enum(CameraStatus, name="camera_status"),
         nullable=False,
         default=CameraStatus.OFFLINE,
+        index=True,
     )
 
     body_temperature: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -77,15 +79,15 @@ class Camera(Base):
     )
     is_recording: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     uptime: Mapped[float | None] = mapped_column(Float, nullable=True, default=0.0)
-    last_seen: Mapped[str | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_seen: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     color_label: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
-    created_at: Mapped[str] = mapped_column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
     )
-    updated_at: Mapped[str] = mapped_column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
