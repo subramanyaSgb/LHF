@@ -9,6 +9,7 @@ import HealthBar from '@/components/dashboard/HealthBar';
 import AlertBanner from '@/components/dashboard/AlertBanner';
 import EmptyState from '@/components/dashboard/EmptyState';
 import LayoutControls from '@/components/dashboard/LayoutControls';
+import DraggableGrid from '@/components/dashboard/DraggableGrid';
 import type { Camera } from '@/types';
 
 /** Minimum card width in pixels for auto-fit column calculation. */
@@ -104,7 +105,13 @@ export default function DashboardPage() {
             )}
 
             {/* Ungrouped / individual camera cards */}
-            {ungroupedCameras.length > 0 && (
+            {ungroupedCameras.length > 0 && currentMode === 'custom' ? (
+              <DraggableGrid
+                cameras={ungroupedCameras}
+                gridCols={effectiveCols}
+                onCameraClick={handleCameraClick}
+              />
+            ) : ungroupedCameras.length > 0 ? (
               <div
                 className="gap-4"
                 style={{
@@ -120,7 +127,7 @@ export default function DashboardPage() {
                   />
                 ))}
               </div>
-            )}
+            ) : null}
           </div>
         </>
       )}

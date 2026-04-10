@@ -9,9 +9,12 @@ import {
   Flame,
   Camera,
   AlertTriangle,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useLayoutStore } from '@/stores/layoutStore';
 import { useAlertStore } from '@/stores/alertStore';
+import { useThemeStore } from '@/stores/themeStore';
 import { useCameraStore } from '@/stores/cameraStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useRecordingStore } from '@/stores/recordingStore';
@@ -44,6 +47,7 @@ export function TopBar(): React.JSX.Element {
   const location = useLocation();
   const { toggleSidebar, fullscreenMode, toggleFullscreen } = useLayoutStore();
   const { audioMuted, toggleAudioMute } = useAlertStore();
+  const { theme, toggleTheme } = useThemeStore();
   const alerts = useAlertStore((s) => s.alerts);
   const cameras = useCameraStore((s) => s.cameras);
   const { user } = useAuthStore();
@@ -134,6 +138,17 @@ export function TopBar(): React.JSX.Element {
           ) : (
             <Maximize className="w-5 h-5" />
           )}
+        </button>
+
+        {/* Theme toggle */}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="flex items-center justify-center w-9 h-9 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-colors"
+          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
         </button>
 
         {/* Divider */}

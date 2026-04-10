@@ -21,6 +21,7 @@ import { Badge } from '@/components/common/Badge';
 import { cn } from '@/utils/cn';
 import { formatDateTime } from '@/utils/format';
 import { useAuthStore } from '@/stores/authStore';
+import { useThemeStore } from '@/stores/themeStore';
 import type { UserRole } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -51,6 +52,8 @@ const roleConfig: Record<UserRole, { icon: React.ReactNode; color: string; label
 
 export default function ProfilePage(): React.JSX.Element {
   const { user, logout } = useAuthStore();
+  const themeStore = useThemeStore();
+  const currentTheme = useThemeStore((s) => s.theme);
 
   // Password form
   const [currentPassword, setCurrentPassword] = useState('');
@@ -313,14 +316,32 @@ export default function ProfilePage(): React.JSX.Element {
           <div>
             <label className="text-base font-medium text-text-primary mb-3 block">Theme</label>
             <div className="flex gap-3">
-              <div className="flex items-center gap-2 px-4 py-2.5 rounded-[var(--radius-md)] border-2 border-brand-primary bg-brand-primary/10">
-                <div className="w-5 h-5 rounded-full bg-bg-primary border border-border-default" />
-                <span className="text-sm font-semibold text-brand-primary">Dark</span>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2.5 rounded-[var(--radius-md)] border-2 border-border-default opacity-50 cursor-not-allowed">
-                <div className="w-5 h-5 rounded-full bg-gray-200 border border-gray-300" />
-                <span className="text-sm font-semibold text-text-muted">Light (Coming Soon)</span>
-              </div>
+              <button
+                type="button"
+                onClick={() => themeStore.setTheme('dark')}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-2.5 rounded-[var(--radius-md)] border-2 cursor-pointer transition-all',
+                  currentTheme === 'dark'
+                    ? 'border-brand-primary bg-brand-primary/10'
+                    : 'border-border-default hover:border-border-focus',
+                )}
+              >
+                <div className="w-5 h-5 rounded-full bg-[#0a0e17] border border-gray-600" />
+                <span className={cn('text-sm font-semibold', currentTheme === 'dark' ? 'text-brand-primary' : 'text-text-muted')}>Dark</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => themeStore.setTheme('light')}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-2.5 rounded-[var(--radius-md)] border-2 cursor-pointer transition-all',
+                  currentTheme === 'light'
+                    ? 'border-brand-primary bg-brand-primary/10'
+                    : 'border-border-default hover:border-border-focus',
+                )}
+              >
+                <div className="w-5 h-5 rounded-full bg-gray-100 border border-gray-300" />
+                <span className={cn('text-sm font-semibold', currentTheme === 'light' ? 'text-brand-primary' : 'text-text-muted')}>Light</span>
+              </button>
             </div>
           </div>
 
