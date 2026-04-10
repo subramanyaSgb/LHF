@@ -286,81 +286,97 @@ export default function ProfilePage(): React.JSX.Element {
         </div>
 
         {/* ============================================================
-            DISPLAY PREFERENCES — Full width
+            DISPLAY PREFERENCES — Same style as Notifications
         ============================================================ */}
         <div className="rounded-[var(--radius-lg)] border border-border-default bg-bg-card shadow-[var(--shadow-card)] overflow-hidden">
           <div className="flex items-center gap-3 px-5 py-4 border-b border-border-default bg-bg-secondary/50">
             <Monitor className="w-5 h-5 text-brand-primary" />
             <h2 className="text-base font-bold text-text-primary">Display</h2>
           </div>
-          <div className="p-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Theme */}
-              <div>
-                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3">Theme</label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => themeStore.setTheme('dark')}
-                    className={cn(
-                      'flex flex-col items-center gap-2 p-4 rounded-[var(--radius-md)] border-2 cursor-pointer transition-all',
-                      currentTheme === 'dark'
-                        ? 'border-brand-primary bg-brand-primary/10 shadow-[var(--shadow-glow-healthy)]'
-                        : 'border-border-default hover:border-border-focus'
-                    )}
-                  >
-                    <Moon className={cn('w-6 h-6', currentTheme === 'dark' ? 'text-brand-primary' : 'text-text-muted')} />
-                    <span className={cn('text-sm font-bold', currentTheme === 'dark' ? 'text-brand-primary' : 'text-text-muted')}>Dark</span>
-                    <span className="text-[10px] text-text-muted">Optimized for factory floor</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => themeStore.setTheme('light')}
-                    className={cn(
-                      'flex flex-col items-center gap-2 p-4 rounded-[var(--radius-md)] border-2 cursor-pointer transition-all',
-                      currentTheme === 'light'
-                        ? 'border-brand-primary bg-brand-primary/10 shadow-[var(--shadow-glow-healthy)]'
-                        : 'border-border-default hover:border-border-focus'
-                    )}
-                  >
-                    <Sun className={cn('w-6 h-6', currentTheme === 'light' ? 'text-brand-primary' : 'text-text-muted')} />
-                    <span className={cn('text-sm font-bold', currentTheme === 'light' ? 'text-brand-primary' : 'text-text-muted')}>Light</span>
-                    <span className="text-[10px] text-text-muted">Standard office display</span>
-                  </button>
+          <div className="p-5 space-y-1">
+            {/* Theme toggle */}
+            <div className="flex items-center justify-between gap-4 px-4 py-3.5 rounded-[var(--radius-md)] hover:bg-bg-secondary/50 transition-colors">
+              <div className="flex items-center gap-3">
+                <span className="text-text-muted">
+                  {currentTheme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">Theme</p>
+                  <p className="text-xs text-text-muted">
+                    {currentTheme === 'dark' ? 'Dark mode — optimized for factory floor' : 'Light mode — standard office display'}
+                  </p>
                 </div>
               </div>
+              <div className="flex items-center gap-1 bg-bg-secondary rounded-[var(--radius-md)] p-0.5 border border-border-default">
+                <button
+                  type="button"
+                  onClick={() => themeStore.setTheme('dark')}
+                  className={cn(
+                    'flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-sm)] text-xs font-bold transition-colors',
+                    currentTheme === 'dark'
+                      ? 'bg-brand-primary text-white'
+                      : 'text-text-muted hover:text-text-primary'
+                  )}
+                >
+                  <Moon className="w-3.5 h-3.5" />
+                  Dark
+                </button>
+                <button
+                  type="button"
+                  onClick={() => themeStore.setTheme('light')}
+                  className={cn(
+                    'flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-sm)] text-xs font-bold transition-colors',
+                    currentTheme === 'light'
+                      ? 'bg-brand-primary text-white'
+                      : 'text-text-muted hover:text-text-primary'
+                  )}
+                >
+                  <Sun className="w-3.5 h-3.5" />
+                  Light
+                </button>
+              </div>
+            </div>
 
-              {/* Sidebar */}
-              <div>
-                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3">Sidebar</label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => { if (sidebarCollapsed) toggleSidebar(); }}
-                    className={cn(
-                      'flex flex-col items-center gap-2 p-4 rounded-[var(--radius-md)] border-2 cursor-pointer transition-all',
-                      !sidebarCollapsed
-                        ? 'border-brand-primary bg-brand-primary/10'
-                        : 'border-border-default hover:border-border-focus'
-                    )}
-                  >
-                    <PanelLeft className={cn('w-6 h-6', !sidebarCollapsed ? 'text-brand-primary' : 'text-text-muted')} />
-                    <span className={cn('text-sm font-bold', !sidebarCollapsed ? 'text-brand-primary' : 'text-text-muted')}>Expanded</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { if (!sidebarCollapsed) toggleSidebar(); }}
-                    className={cn(
-                      'flex flex-col items-center gap-2 p-4 rounded-[var(--radius-md)] border-2 cursor-pointer transition-all',
-                      sidebarCollapsed
-                        ? 'border-brand-primary bg-brand-primary/10'
-                        : 'border-border-default hover:border-border-focus'
-                    )}
-                  >
-                    <PanelLeftClose className={cn('w-6 h-6', sidebarCollapsed ? 'text-brand-primary' : 'text-text-muted')} />
-                    <span className={cn('text-sm font-bold', sidebarCollapsed ? 'text-brand-primary' : 'text-text-muted')}>Collapsed</span>
-                  </button>
+            {/* Sidebar toggle */}
+            <div className="flex items-center justify-between gap-4 px-4 py-3.5 rounded-[var(--radius-md)] hover:bg-bg-secondary/50 transition-colors">
+              <div className="flex items-center gap-3">
+                <span className="text-text-muted">
+                  {sidebarCollapsed ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">Sidebar</p>
+                  <p className="text-xs text-text-muted">
+                    {sidebarCollapsed ? 'Collapsed — icon-only navigation' : 'Expanded — full navigation with labels'}
+                  </p>
                 </div>
+              </div>
+              <div className="flex items-center gap-1 bg-bg-secondary rounded-[var(--radius-md)] p-0.5 border border-border-default">
+                <button
+                  type="button"
+                  onClick={() => { if (sidebarCollapsed) toggleSidebar(); }}
+                  className={cn(
+                    'flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-sm)] text-xs font-bold transition-colors',
+                    !sidebarCollapsed
+                      ? 'bg-brand-primary text-white'
+                      : 'text-text-muted hover:text-text-primary'
+                  )}
+                >
+                  <PanelLeft className="w-3.5 h-3.5" />
+                  Expanded
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { if (!sidebarCollapsed) toggleSidebar(); }}
+                  className={cn(
+                    'flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-sm)] text-xs font-bold transition-colors',
+                    sidebarCollapsed
+                      ? 'bg-brand-primary text-white'
+                      : 'text-text-muted hover:text-text-primary'
+                  )}
+                >
+                  <PanelLeftClose className="w-3.5 h-3.5" />
+                  Collapsed
+                </button>
               </div>
             </div>
           </div>
