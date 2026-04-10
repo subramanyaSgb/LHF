@@ -1,177 +1,498 @@
 import type { Report } from '@/types';
 
-const REPORT_SECTIONS = [
-  'Temperature Summary',
-  'Alert History',
-  'Heat Timeline',
-  'Camera Uptime',
-  'Ladle Life Status',
-  'Anomaly Highlights',
-  'Operator Notes',
-];
+// ============================================================
+// Professional report generator using multi-page canvas
+// Renders a high-quality branded report as downloadable PNG
+// ============================================================
+
+const S = 2; // Scale factor for high DPI
+const PW = 595 * S; // A4 width
+const PH = 842 * S; // A4 height
+const M = 48 * S; // Margin
+const CW = PW - M * 2; // Content width
+
+// Colors
+const C = {
+  brand: '#2563eb',
+  brandDark: '#1e40af',
+  headerBg: '#0f172a',
+  white: '#ffffff',
+  light: '#f8fafc',
+  gray50: '#f9fafb',
+  gray100: '#f3f4f6',
+  gray200: '#e5e7eb',
+  gray400: '#9ca3af',
+  gray500: '#6b7280',
+  gray700: '#374151',
+  gray900: '#111827',
+  green: '#16a34a',
+  greenBg: '#f0fdf4',
+  greenBorder: '#bbf7d0',
+  yellow: '#ca8a04',
+  yellowBg: '#fefce8',
+  yellowBorder: '#fef08a',
+  red: '#dc2626',
+  redBg: '#fef2f2',
+  redBorder: '#fecaca',
+  blueBg: '#eff6ff',
+  blueBorder: '#bfdbfe',
+};
+
+function font(weight: string, size: number): string {
+  return `${weight} ${size * S}px Inter, Segoe UI, system-ui, sans-serif`;
+}
+
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function drawStatCard(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number,
+  label: string, value: string, color: string, bgColor: string, borderColor: string,
+): number {
+  const h = 70 * S;
+  roundRect(ctx, x, y, w, h, 8 * S);
+  ctx.fillStyle = bgColor;
+  ctx.fill();
+  ctx.strokeStyle = borderColor;
+  ctx.lineWidth = 1 * S;
+  ctx.stroke();
+
+  // Color accent bar
+  ctx.fillStyle = color;
+  roundRect(ctx, x, y, 5 * S, h, 8 * S);
+  ctx.fill();
+  ctx.fillRect(x + 4 * S, y, 2 * S, h);
+
+  ctx.fillStyle = C.gray500;
+  ctx.font = font('600', 10);
+  ctx.fillText(label.toUpperCase(), x + 18 * S, y + 25 * S);
+
+  ctx.fillStyle = color;
+  ctx.font = font('bold', 22);
+  ctx.fillText(value, x + 18 * S, y + 55 * S);
+
+  return h;
+}
+
+function drawProgressBar(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number,
+  label: string, value: number, max: number, color: string, warningThreshold?: number,
+): number {
+  const h = 38 * S;
+  const barH = 10 * S;
+  const pct = Math.min(value / max, 1);
+  const isWarning = warningThreshold !== undefined && value >= warningThreshold;
+
+  ctx.fillStyle = C.gray700;
+  ctx.font = font('600', 10);
+  ctx.fillText(label, x, y + 14 * S);
+
+  const valStr = `${value}/${max}`;
+  ctx.fillStyle = isWarning ? C.red : C.gray500;
+  ctx.font = font('bold', 10);
+  const valW = ctx.measureText(valStr).width;
+  ctx.fillText(valStr, x + w - valW, y + 14 * S);
+
+  // Track
+  roundRect(ctx, x, y + 22 * S, w, barH, 5 * S);
+  ctx.fillStyle = C.gray100;
+  ctx.fill();
+
+  // Fill
+  const barFillColor = isWarning ? C.red : color;
+  if (pct > 0) {
+    roundRect(ctx, x, y + 22 * S, Math.max(w * pct, 10 * S), barH, 5 * S);
+    ctx.fillStyle = barFillColor;
+    ctx.fill();
+  }
+
+  return h;
+}
+
+function drawTable(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number,
+  headers: string[], rows: string[][], colWidths: number[],
+): number {
+  const rowH = 28 * S;
+  const headerH = 30 * S;
+  let cy = y;
+
+  // Header
+  roundRect(ctx, x, cy, w, headerH, 6 * S);
+  ctx.fillStyle = C.gray50;
+  ctx.fill();
+  ctx.strokeStyle = C.gray200;
+  ctx.lineWidth = 1 * S;
+  ctx.stroke();
+
+  ctx.fillStyle = C.gray500;
+  ctx.font = font('bold', 9);
+  let cx = x + 12 * S;
+  headers.forEach((h, i) => {
+    ctx.fillText(h.toUpperCase(), cx, cy + 19 * S);
+    cx += colWidths[i] * S;
+  });
+  cy += headerH;
+
+  // Rows
+  rows.forEach((row, rowIdx) => {
+    if (rowIdx % 2 === 0) {
+      ctx.fillStyle = C.white;
+    } else {
+      ctx.fillStyle = '#fafbfc';
+    }
+    ctx.fillRect(x, cy, w, rowH);
+
+    ctx.strokeStyle = C.gray100;
+    ctx.lineWidth = 0.5 * S;
+    ctx.beginPath();
+    ctx.moveTo(x, cy + rowH);
+    ctx.lineTo(x + w, cy + rowH);
+    ctx.stroke();
+
+    cx = x + 12 * S;
+    row.forEach((cell, i) => {
+      ctx.fillStyle = i === 0 ? C.gray900 : C.gray700;
+      ctx.font = i === 0 ? font('600', 10) : font('normal', 10);
+      ctx.fillText(cell, cx, cy + 18 * S);
+      cx += colWidths[i] * S;
+    });
+    cy += rowH;
+  });
+
+  // Bottom border
+  ctx.strokeStyle = C.gray200;
+  ctx.lineWidth = 1 * S;
+  ctx.beginPath();
+  ctx.moveTo(x, cy);
+  ctx.lineTo(x + w, cy);
+  ctx.stroke();
+
+  return cy - y;
+}
+
+function drawSectionHeader(ctx: CanvasRenderingContext2D, y: number, num: number, title: string): number {
+  // Blue accent line
+  ctx.fillStyle = C.brand;
+  ctx.fillRect(M, y, CW, 3 * S);
+  y += 12 * S;
+
+  ctx.fillStyle = C.gray900;
+  ctx.font = font('bold', 14);
+  ctx.fillText(`${num}. ${title}`, M, y + 16 * S);
+  return y + 28 * S;
+}
+
+function drawMiniChart(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number, h: number,
+  data: number[], color: string, label: string,
+): void {
+  // Background
+  roundRect(ctx, x, y, w, h, 6 * S);
+  ctx.fillStyle = C.white;
+  ctx.fill();
+  ctx.strokeStyle = C.gray200;
+  ctx.lineWidth = 1 * S;
+  ctx.stroke();
+
+  // Label
+  ctx.fillStyle = C.gray500;
+  ctx.font = font('600', 8);
+  ctx.fillText(label, x + 10 * S, y + 16 * S);
+
+  // Chart area
+  const chartX = x + 10 * S;
+  const chartY = y + 24 * S;
+  const chartW = w - 20 * S;
+  const chartH = h - 34 * S;
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+
+  // Grid lines
+  ctx.strokeStyle = C.gray100;
+  ctx.lineWidth = 0.5 * S;
+  for (let i = 0; i < 4; i++) {
+    const gy = chartY + (chartH / 3) * i;
+    ctx.beginPath();
+    ctx.moveTo(chartX, gy);
+    ctx.lineTo(chartX + chartW, gy);
+    ctx.stroke();
+  }
+
+  // Area fill
+  ctx.beginPath();
+  ctx.moveTo(chartX, chartY + chartH);
+  data.forEach((v, i) => {
+    const px = chartX + (chartW / (data.length - 1)) * i;
+    const py = chartY + chartH - ((v - min) / range) * chartH;
+    ctx.lineTo(px, py);
+  });
+  ctx.lineTo(chartX + chartW, chartY + chartH);
+  ctx.closePath();
+  ctx.fillStyle = color + '20';
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  data.forEach((v, i) => {
+    const px = chartX + (chartW / (data.length - 1)) * i;
+    const py = chartY + chartH - ((v - min) / range) * chartH;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  });
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2 * S;
+  ctx.stroke();
+}
 
 export function downloadReportPdf(report: Report): void {
   const canvas = document.createElement('canvas');
-  const dpi = 2;
-  const pageW = 595 * dpi; // A4 width in points
-  const pageH = 842 * dpi; // A4 height
-  canvas.width = pageW;
-  canvas.height = pageH;
+  canvas.width = PW;
+  canvas.height = PH * 2; // Two pages tall
   const ctx = canvas.getContext('2d')!;
 
-  // --- Background ---
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, pageW, pageH);
+  // White background
+  ctx.fillStyle = C.white;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // --- Header band ---
-  ctx.fillStyle = '#0a0e17';
-  ctx.fillRect(0, 0, pageW, 120 * dpi);
-  ctx.fillStyle = '#3b82f6';
-  ctx.fillRect(0, 120 * dpi, pageW, 4 * dpi);
+  // ================================================================
+  // HEADER
+  // ================================================================
+  const headerH = 100 * S;
+  ctx.fillStyle = C.headerBg;
+  ctx.fillRect(0, 0, PW, headerH);
 
-  // --- Title ---
-  ctx.fillStyle = '#ffffff';
-  ctx.font = `bold ${28 * dpi}px Inter, system-ui, sans-serif`;
-  ctx.fillText('INFRASENSE', 40 * dpi, 50 * dpi);
-  ctx.font = `${14 * dpi}px Inter, system-ui, sans-serif`;
-  ctx.fillStyle = '#94a3b8';
-  ctx.fillText('LHF Thermal Monitoring System — JSW Vijayanagar SMS', 40 * dpi, 75 * dpi);
-  ctx.font = `bold ${18 * dpi}px Inter, system-ui, sans-serif`;
-  ctx.fillStyle = '#f1f5f9';
-  ctx.fillText(report.title, 40 * dpi, 105 * dpi);
+  // Brand gradient accent
+  const grad = ctx.createLinearGradient(0, headerH, PW, headerH);
+  grad.addColorStop(0, C.brand);
+  grad.addColorStop(1, C.brandDark);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, headerH, PW, 4 * S);
 
-  let y = 155 * dpi;
-  const leftMargin = 40 * dpi;
+  // Logo text
+  ctx.fillStyle = C.white;
+  ctx.font = font('bold', 24);
+  ctx.fillText('INFRASENSE', M, 40 * S);
 
-  // --- Report Metadata ---
-  ctx.fillStyle = '#f8f9fa';
-  ctx.fillRect(leftMargin, y, pageW - 80 * dpi, 80 * dpi);
-  ctx.strokeStyle = '#e5e7eb';
-  ctx.lineWidth = 1 * dpi;
-  ctx.strokeRect(leftMargin, y, pageW - 80 * dpi, 80 * dpi);
+  ctx.fillStyle = C.gray400;
+  ctx.font = font('normal', 10);
+  ctx.fillText('LHF Thermal Monitoring System  |  JSW Vijayanagar SMS', M, 58 * S);
 
-  ctx.font = `${11 * dpi}px Inter, system-ui, sans-serif`;
-  ctx.fillStyle = '#6b7280';
-  ctx.fillText('Report Type:', leftMargin + 15 * dpi, y + 20 * dpi);
-  ctx.fillText('Date Range:', leftMargin + 15 * dpi, y + 40 * dpi);
-  ctx.fillText('Generated:', leftMargin + 15 * dpi, y + 60 * dpi);
+  // Report title
+  ctx.fillStyle = '#93c5fd';
+  ctx.font = font('bold', 15);
+  ctx.fillText(report.title, M, 85 * S);
 
-  ctx.fillStyle = '#111827';
-  ctx.font = `bold ${11 * dpi}px Inter, system-ui, sans-serif`;
-  ctx.fillText(report.type.charAt(0).toUpperCase() + report.type.slice(1), leftMargin + 110 * dpi, y + 20 * dpi);
-  ctx.fillText(`${report.dateFrom.split('T')[0]} to ${report.dateTo.split('T')[0]}`, leftMargin + 110 * dpi, y + 40 * dpi);
-  ctx.fillText(report.generatedAt.split('T')[0] + ' ' + (report.generatedAt.split('T')[1]?.substring(0, 8) || ''), leftMargin + 110 * dpi, y + 60 * dpi);
+  // Date on right
+  ctx.fillStyle = C.gray400;
+  ctx.font = font('normal', 10);
+  const dateStr = report.generatedAt.split('T')[0];
+  const dateW = ctx.measureText(dateStr).width;
+  ctx.fillText(dateStr, PW - M - dateW, 40 * S);
 
-  if (report.emailedTo.length > 0) {
-    ctx.fillStyle = '#6b7280';
-    ctx.font = `${11 * dpi}px Inter, system-ui, sans-serif`;
-    ctx.fillText('Emailed To:', leftMargin + 300 * dpi, y + 20 * dpi);
-    ctx.fillStyle = '#111827';
-    ctx.font = `bold ${11 * dpi}px Inter, system-ui, sans-serif`;
-    ctx.fillText(report.emailedTo.join(', '), leftMargin + 390 * dpi, y + 20 * dpi);
-  }
+  let y = headerH + 20 * S;
 
-  y += 100 * dpi;
+  // ================================================================
+  // SUMMARY CARDS
+  // ================================================================
+  const cardW = (CW - 16 * S * 3) / 4;
+  const cards = [
+    { label: 'Total Heats', value: '3', color: C.brand, bg: C.blueBg, border: C.blueBorder },
+    { label: 'Peak Temp', value: '1,385°C', color: C.red, bg: C.redBg, border: C.redBorder },
+    { label: 'Alerts', value: '5', color: C.yellow, bg: C.yellowBg, border: C.yellowBorder },
+    { label: 'Uptime Avg', value: '96.7%', color: C.green, bg: C.greenBg, border: C.greenBorder },
+  ];
 
-  // --- Sections ---
-  REPORT_SECTIONS.forEach((section, idx) => {
-    // Section header
-    ctx.fillStyle = '#3b82f6';
-    ctx.fillRect(leftMargin, y, 4 * dpi, 20 * dpi);
-    ctx.fillStyle = '#111827';
-    ctx.font = `bold ${14 * dpi}px Inter, system-ui, sans-serif`;
-    ctx.fillText(`${idx + 1}. ${section}`, leftMargin + 12 * dpi, y + 16 * dpi);
-    y += 30 * dpi;
-
-    // Simulated content
-    ctx.fillStyle = '#4b5563';
-    ctx.font = `${10 * dpi}px Inter, system-ui, sans-serif`;
-
-    const lines = generateSectionContent(section);
-    for (const line of lines) {
-      ctx.fillText(line, leftMargin + 12 * dpi, y + 12 * dpi);
-      y += 16 * dpi;
-    }
-
-    y += 15 * dpi;
-
-    // Check if we need more space
-    if (y > pageH - 60 * dpi) return;
+  cards.forEach((card, i) => {
+    const cx = M + i * (cardW + 16 * S);
+    drawStatCard(ctx, cx, y, cardW, card.label, card.value, card.color, card.bg, card.border);
   });
+  y += 85 * S;
 
-  // --- Footer ---
-  ctx.fillStyle = '#e5e7eb';
-  ctx.fillRect(0, pageH - 40 * dpi, pageW, 1 * dpi);
-  ctx.fillStyle = '#9ca3af';
-  ctx.font = `${9 * dpi}px Inter, system-ui, sans-serif`;
-  ctx.fillText('Generated by InfraSense — LHF Thermal Monitoring System', leftMargin, pageH - 20 * dpi);
-  ctx.fillText(`Page 1 of 1`, pageW - 120 * dpi, pageH - 20 * dpi);
+  // ================================================================
+  // SECTION 1: Temperature Summary
+  // ================================================================
+  y = drawSectionHeader(ctx, y, 1, 'Temperature Summary');
 
-  // --- Download ---
-  canvas.toBlob((blob) => {
+  // Mini charts side by side
+  const chartW = (CW - 16 * S) / 2;
+  const chartH = 100 * S;
+  const tempData1 = Array.from({ length: 24 }, () => 1200 + Math.random() * 180);
+  const tempData2 = Array.from({ length: 24 }, () => 1100 + Math.random() * 150);
+  drawMiniChart(ctx, M, y, chartW, chartH, tempData1, C.red, 'LHF-1 MAX TEMPERATURE (24H)');
+  drawMiniChart(ctx, M + chartW + 16 * S, y, chartW, chartH, tempData2, C.brand, 'LHF-2 MAX TEMPERATURE (24H)');
+  y += chartH + 16 * S;
+
+  // Summary table
+  y += drawTable(ctx, M, y, CW,
+    ['Metric', 'LHF-1', 'LHF-2', 'Overall'],
+    [
+      ['Peak Temperature', '1,385°C', '1,290°C', '1,385°C'],
+      ['Average Temperature', '1,265°C', '1,210°C', '1,238°C'],
+      ['Min Temperature', '1,050°C', '980°C', '980°C'],
+      ['Above Threshold', '12 events', '2 events', '14 events'],
+    ],
+    [150, 100, 100, 100],
+  );
+  y += 24 * S;
+
+  // ================================================================
+  // SECTION 2: Alert History
+  // ================================================================
+  y = drawSectionHeader(ctx, y, 2, 'Alert History');
+
+  // Alert summary cards
+  const alertCards = [
+    { label: 'Critical', value: '2', color: C.red, bg: C.redBg, border: C.redBorder },
+    { label: 'Warning', value: '2', color: C.yellow, bg: C.yellowBg, border: C.yellowBorder },
+    { label: 'Info', value: '1', color: C.brand, bg: C.blueBg, border: C.blueBorder },
+  ];
+  const alertCardW = (CW - 16 * S * 2) / 3;
+  alertCards.forEach((card, i) => {
+    drawStatCard(ctx, M + i * (alertCardW + 16 * S), y, alertCardW, card.label, card.value, card.color, card.bg, card.border);
+  });
+  y += 85 * S;
+
+  y += drawTable(ctx, M, y, CW,
+    ['Time', 'Type', 'Location', 'Value', 'Status'],
+    [
+      ['10:25', 'Temp Breach', 'LHF-1 Rim A', '1,385°C', 'Acknowledged'],
+      ['10:20', 'Rapid Spike', 'LHF-1 Center', '+65°C/30s', 'Acknowledged'],
+      ['09:15', 'Cam Offline', 'LHF-2 South', '75 min', 'Active'],
+      ['08:30', 'Temp Breach', 'LHF-1 North', '1,355°C', 'Resolved'],
+      ['06:15', 'Disk Warning', 'Server', '18% free', 'Resolved'],
+    ],
+    [70, 90, 100, 90, 100],
+  );
+  y += 24 * S;
+
+  // ================================================================
+  // SECTION 3: Heat Timeline
+  // ================================================================
+  y = drawSectionHeader(ctx, y, 3, 'Heat Timeline');
+  y += drawTable(ctx, M, y, CW,
+    ['Heat No.', 'Group', 'Ladle', 'Duration', 'Peak', 'Alerts', 'Trigger'],
+    [
+      ['H-4521', 'LHF-1', 'L-087 (#42)', '45 min', '1,385°C', '2', 'PLC Auto'],
+      ['H-4520', 'LHF-1', 'L-052 (#78)', '45 min', '1,320°C', '0', 'PLC Auto'],
+      ['H-4519', 'LHF-2', 'L-034 (#15)', '42 min', '1,290°C', '1', 'Manual'],
+    ],
+    [80, 60, 80, 65, 70, 55, 70],
+  );
+  y += 24 * S;
+
+  // ================================================================
+  // SECTION 4: Camera Uptime
+  // ================================================================
+  y = drawSectionHeader(ctx, y, 4, 'Camera Uptime');
+
+  const cameras = [
+    { name: 'LHF-1 North', uptime: 99.8 },
+    { name: 'LHF-1 East', uptime: 99.5 },
+    { name: 'LHF-1 South', uptime: 98.2 },
+    { name: 'LHF-1 West', uptime: 99.9 },
+    { name: 'LHF-2 North', uptime: 97.5 },
+    { name: 'LHF-2 South', uptime: 85.3 },
+  ];
+  cameras.forEach((cam) => {
+    const barColor = cam.uptime >= 99 ? C.green : cam.uptime >= 95 ? C.yellow : C.red;
+    y += drawProgressBar(ctx, M, y, CW, `${cam.name}  —  ${cam.uptime}%`, cam.uptime, 100, barColor, 90) + 4 * S;
+  });
+  y += 12 * S;
+
+  // ================================================================
+  // SECTION 5: Ladle Life
+  // ================================================================
+  y = drawSectionHeader(ctx, y, 5, 'Ladle Life Status');
+
+  const ladles = [
+    { id: 'L-087', life: 42, max: 100 },
+    { id: 'L-052', life: 78, max: 100 },
+    { id: 'L-034', life: 15, max: 100 },
+    { id: 'L-098', life: 91, max: 100 },
+  ];
+  ladles.forEach((l) => {
+    const color = l.life >= 80 ? C.red : l.life >= 60 ? C.yellow : C.green;
+    y += drawProgressBar(ctx, M, y, CW, `${l.id}  —  ${l.life}/${l.max} uses`, l.life, l.max, color, 80) + 4 * S;
+  });
+  y += 12 * S;
+
+  // ================================================================
+  // SECTION 6: Operator Notes
+  // ================================================================
+  y = drawSectionHeader(ctx, y, 6, 'Operator Notes');
+
+  const notes = [
+    'Camera 6 went offline at 09:15 — IT team notified for GigE cable inspection.',
+    'LHF-1 ran 3 heats successfully. H-4521 flagged for rim temperature breach.',
+    'PLC signals working correctly throughout the shift. No manual overrides needed.',
+  ];
+  notes.forEach((note) => {
+    roundRect(ctx, M, y, CW, 26 * S, 4 * S);
+    ctx.fillStyle = C.gray50;
+    ctx.fill();
+    ctx.strokeStyle = C.gray200;
+    ctx.lineWidth = 0.5 * S;
+    ctx.stroke();
+
+    ctx.fillStyle = C.brand;
+    ctx.font = font('normal', 10);
+    ctx.fillText('•', M + 10 * S, y + 17 * S);
+    ctx.fillStyle = C.gray700;
+    ctx.fillText(note, M + 22 * S, y + 17 * S);
+    y += 32 * S;
+  });
+  y += 12 * S;
+
+  // ================================================================
+  // FOOTER
+  // ================================================================
+  const footerY = Math.max(y + 20 * S, PH - 50 * S);
+  ctx.fillStyle = C.gray200;
+  ctx.fillRect(M, footerY, CW, 1 * S);
+
+  ctx.fillStyle = C.gray400;
+  ctx.font = font('normal', 8);
+  ctx.fillText('Generated by InfraSense — LHF Thermal Monitoring System — JSW Vijayanagar SMS', M, footerY + 18 * S);
+
+  const pageLabel = 'Page 1 of 1  |  Confidential';
+  const pageLabelW = ctx.measureText(pageLabel).width;
+  ctx.fillText(pageLabel, PW - M - pageLabelW, footerY + 18 * S);
+
+  // ================================================================
+  // DOWNLOAD
+  // ================================================================
+  // Crop canvas to actual content height
+  const croppedH = Math.min(footerY + 30 * S, canvas.height);
+  const croppedCanvas = document.createElement('canvas');
+  croppedCanvas.width = PW;
+  croppedCanvas.height = croppedH;
+  const cctx = croppedCanvas.getContext('2d')!;
+  cctx.drawImage(canvas, 0, 0);
+
+  croppedCanvas.toBlob((blob) => {
     if (!blob) return;
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${report.title.replace(/[^a-zA-Z0-9-_ ]/g, '')}.png`;
+    a.download = `${report.title.replace(/[^a-zA-Z0-9-_ ]/g, '')} Report.png`;
     a.click();
     URL.revokeObjectURL(url);
   }, 'image/png');
-}
-
-function generateSectionContent(section: string): string[] {
-  switch (section) {
-    case 'Temperature Summary':
-      return [
-        'Peak Temperature: 1,385°C (LHF-1 North, Camera Cam-1)',
-        'Average Temperature: 1,265°C across all monitoring zones',
-        'Minimum Temperature: 980°C (LHF-2 South, idle period)',
-        'Readings above threshold (1,350°C): 12 occurrences',
-      ];
-    case 'Alert History':
-      return [
-        'Total Alerts Triggered: 5 (2 Critical, 2 Warning, 1 Info)',
-        'Temperature Breach: 2 alerts — LHF-1 Rim Section A exceeded 1,350°C',
-        'Rapid Spike: 1 alert — +65°C in 20 seconds at LHF-1 Center',
-        'Camera Offline: 1 alert — LHF-2 South offline for 75 minutes',
-        'All critical alerts acknowledged within 3 minutes',
-      ];
-    case 'Heat Timeline':
-      return [
-        'Total Heats Processed: 3 (H-4519, H-4520, H-4521)',
-        'Average Heat Duration: 43 minutes',
-        'Longest Heat: H-4521 — 45 min (LHF-1, flagged for review)',
-        'PLC trigger success rate: 100% (2 auto, 1 manual)',
-      ];
-    case 'Camera Uptime':
-      return [
-        'LHF-1 North (Cam-1): 99.8% uptime',
-        'LHF-1 East (Cam-2): 99.5% uptime',
-        'LHF-1 South (Cam-3): 98.2% uptime',
-        'LHF-1 West (Cam-4): 99.9% uptime',
-        'LHF-2 North (Cam-5): 97.5% uptime',
-        'LHF-2 South (Cam-6): 85.3% uptime — REQUIRES ATTENTION',
-      ];
-    case 'Ladle Life Status':
-      return [
-        'L-087: 42/100 uses — No maintenance required',
-        'L-052: 78/100 uses — Approaching maintenance threshold',
-        'L-034: 15/100 uses — Healthy',
-        'L-098: 91/100 uses — MAINTENANCE DUE (recurring hot spots detected)',
-      ];
-    case 'Anomaly Highlights':
-      return [
-        'Heat H-4521: Rim section exceeded safe threshold by 35°C for 8 minutes',
-        'Ladle L-098: Recurring hot spot at position (0.3, 0.7) across 5 heats',
-        'Camera Cam-6: Intermittent disconnection — check GigE cable',
-      ];
-    case 'Operator Notes':
-      return [
-        'Night shift: Camera 6 went offline at 09:15, IT team notified',
-        'LHF-1 ran 3 heats, all normal except H-4521 (rim breach)',
-        'PLC signals working fine throughout the shift',
-      ];
-    default:
-      return ['No data available for this section.'];
-  }
 }
