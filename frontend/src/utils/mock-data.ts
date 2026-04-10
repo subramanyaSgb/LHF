@@ -197,13 +197,14 @@ export const mockGroups: CameraGroup[] = [
 ];
 
 // --- Mock ROIs ---
+// Coordinates are normalized to 0-1 range (relative to camera resolution 764x480).
 export const mockROIs: ROI[] = [
   {
     id: 'roi1',
     cameraId: 'cam1',
     name: 'Rim Section A',
     shape: 'box',
-    points: [{ x: 100, y: 80 }, { x: 300, y: 200 }],
+    points: [{ x: 0.131, y: 0.167 }, { x: 0.393, y: 0.417 }],
     color: '#22c55e',
     fontSize: 'medium',
     showMin: false,
@@ -216,7 +217,7 @@ export const mockROIs: ROI[] = [
     cameraId: 'cam1',
     name: 'Center',
     shape: 'point',
-    points: [{ x: 382, y: 240 }],
+    points: [{ x: 0.5, y: 0.5 }],
     color: '#f59e0b',
     fontSize: 'large',
     showMin: false,
@@ -229,8 +230,8 @@ export const mockROIs: ROI[] = [
     cameraId: 'cam3',
     name: 'Base Zone',
     shape: 'circle',
-    points: [{ x: 380, y: 350 }],
-    radius: 80,
+    points: [{ x: 0.497, y: 0.729 }],
+    radius: 0.105,
     color: '#3b82f6',
     fontSize: 'medium',
     showMin: true,
