@@ -175,7 +175,21 @@ function ReportPreviewModal({ report, onClose }: { report: Report; onClose: () =
             Close
           </button>
           {report.status === 'completed' && (
-            <button className="flex items-center gap-2 px-5 py-2.5 bg-brand-primary hover:bg-brand-primary-hover text-white text-sm font-semibold rounded-[var(--radius-md)] transition-colors">
+            <button
+              onClick={() => {
+                const blob = new Blob(
+                  [`InfraSense Report\n\n${report.title}\nGenerated: ${report.generatedAt}\nDate Range: ${report.dateFrom} to ${report.dateTo}\n\nThis is a simulated PDF download.`],
+                  { type: 'application/pdf' }
+                );
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${report.title.replace(/[^a-zA-Z0-9-_ ]/g, '')}.pdf`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+              className="flex items-center gap-2 px-5 py-2.5 bg-brand-primary hover:bg-brand-primary-hover text-white text-sm font-semibold rounded-[var(--radius-md)] transition-colors"
+            >
               <Download className="w-4 h-4" />
               Download PDF
             </button>
@@ -735,6 +749,20 @@ export default function ReportsPage(): React.JSX.Element {
                         {/* Download */}
                         <button
                           disabled={report.status !== 'completed'}
+                          onClick={() => {
+                            if (report.status === 'completed') {
+                              const blob = new Blob(
+                                [`InfraSense Report\n\n${report.title}\nGenerated: ${report.generatedAt}\nDate Range: ${report.dateFrom} to ${report.dateTo}\n\nThis is a simulated PDF download.`],
+                                { type: 'application/pdf' }
+                              );
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = `${report.title.replace(/[^a-zA-Z0-9-_ ]/g, '')}.pdf`;
+                              a.click();
+                              URL.revokeObjectURL(url);
+                            }
+                          }}
                           className="p-1.5 text-text-muted hover:text-status-healthy hover:bg-status-healthy-bg disabled:opacity-30 disabled:cursor-not-allowed rounded-[var(--radius-sm)] transition-colors"
                           title="Download PDF"
                         >
