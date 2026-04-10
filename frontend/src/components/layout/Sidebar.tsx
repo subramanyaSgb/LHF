@@ -195,49 +195,25 @@ export function Sidebar(): React.JSX.Element {
           )}
         </button>
 
-        {/* User info + Logout */}
-        {user && (
-          <div
+        {/* Logout */}
+        <div
+          className={cn(
+            'border-t border-border-default',
+            sidebarCollapsed ? 'py-2' : 'p-3'
+          )}
+        >
+          <button
+            onClick={handleLogout}
             className={cn(
-              'border-t border-border-default',
-              sidebarCollapsed ? 'py-2' : 'p-3'
+              'flex items-center gap-2 text-sm text-text-muted hover:text-status-critical transition-colors',
+              sidebarCollapsed ? 'justify-center w-full py-1' : 'px-1'
             )}
+            title="Sign out"
           >
-            {!sidebarCollapsed && (
-              <div className="flex items-center gap-2 mb-2 min-w-0">
-                <div className="w-8 h-8 rounded-full bg-brand-primary/20 flex items-center justify-center shrink-0">
-                  <span className="text-xs font-bold text-brand-primary">
-                    {user.displayName
-                      .split(' ')
-                      .map((n) => n[0])
-                      .join('')
-                      .slice(0, 2)
-                      .toUpperCase()}
-                  </span>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-text-primary truncate">
-                    {user.displayName}
-                  </p>
-                  <p className="text-[10px] text-text-muted capitalize truncate">
-                    {user.role}
-                  </p>
-                </div>
-              </div>
-            )}
-            <button
-              onClick={handleLogout}
-              className={cn(
-                'flex items-center gap-2 text-sm text-text-muted hover:text-status-critical transition-colors',
-                sidebarCollapsed ? 'justify-center w-full py-1' : 'px-1'
-              )}
-              title="Sign out"
-            >
-              <LogOut className="w-4 h-4" />
-              {!sidebarCollapsed && <span className="text-xs">Sign Out</span>}
-            </button>
-          </div>
-        )}
+            <LogOut className="w-4 h-4" />
+            {!sidebarCollapsed && <span className="text-xs">Sign Out</span>}
+          </button>
+        </div>
       </div>
     </aside>
   );
