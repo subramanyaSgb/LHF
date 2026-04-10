@@ -4,6 +4,7 @@ import { formatTemp, getTempColor } from '@/utils/temperature';
 import { generateMockThermalFrame } from '@/utils/mock-data';
 import { useAlertStore } from '@/stores/alertStore';
 import ThermalCanvas from './ThermalCanvas';
+import ROIOverlay from '@/components/roi/ROIOverlay';
 import type { Camera } from '@/types';
 import { Thermometer, Circle } from 'lucide-react';
 
@@ -127,8 +128,8 @@ export default function CameraCard({ camera, onClick, className }: CameraCardPro
         </div>
       </div>
 
-      {/* ---- Thermal feed ---- */}
-      <div className="relative aspect-[4/3] w-full bg-black">
+      {/* ---- Thermal feed + ROI overlay ---- */}
+      <div className="relative aspect-[4/3] w-full bg-black" onClick={(e) => e.stopPropagation()}>
         {isOffline ? (
           <div className="flex items-center justify-center w-full h-full">
             <span className="text-2xl font-bold text-status-offline uppercase tracking-widest">
@@ -136,7 +137,10 @@ export default function CameraCard({ camera, onClick, className }: CameraCardPro
             </span>
           </div>
         ) : (
-          <ThermalCanvas thermalMatrix={thermalMatrix} />
+          <>
+            <ThermalCanvas thermalMatrix={thermalMatrix} />
+            <ROIOverlay cameraId={camera.id} />
+          </>
         )}
       </div>
 
